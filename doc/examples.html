@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alakit Framework - Példa Tár</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        .step-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid var(--accent-color);
+            padding: 2rem;
+            margin-bottom: 3rem;
+            border-radius: 0 0.8rem 0.8rem 0;
+        }
+        .step-number {
+            background: var(--accent-color);
+            color: var(--bg-color);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .file-label {
+            display: inline-block;
+            background: var(--border-color);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-bottom: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            border-bottom: 2px solid var(--accent-color);
+        }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 4rem; }
+        .highlight { color: var(--accent-color); font-weight: bold; }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <h1>ALAKIT<span>|examples</span></h1>
+        <ul>
+            <li><a href="index.html">← Vissza a főoldalra</a></li>
+            <li><a href="#setup" style="color: var(--accent-color); font-weight: bold;">0. Projekt Felépítés</a></li>
+            <li><a href="#hello-world">1. Hello World (Input & Greet)</a></li>
+            <li><a href="#counter">2. Counter App (Store & Logic)</a></li>
+        </ul>
+        <div class="version">Version v0.1.0-alpha</div>
+    </nav>
+
+    <main>
+        <h1>Alakit Gyakorlati Példák</h1>
+        <p>Tanuld meg az Alakit használatát valódi kódpéldákon keresztül. A "Hello World"-től az állapotkezelésig mindenre találsz itt választ.</p>
+
+        <section id="setup">
+            <h2>Hogyan épül fel egy Alakit projekt?</h2>
+            <p>Mielőtt belevágnál a kódolásba, fontos megérteni a javasolt fájlszerkezetet. Az Alakit szereti a tisztán szétválasztott HTML (UI) és Rust (Logika) állományokat.</p>
+
+            <div class="step-card">
+                <h3>Ajánlott Könyvtárszerkezet</h3>
+                <pre><code>napsugar_app/
+├── 📁 src/
+│   ├── 📁 controllers/    <-- Ide kerülnek a Rust kontrollerek
+│   │   ├── mod.rs
+│   │   └── greet.rs       <-- Pl. a GreetController
+│   └── main.rs            <-- Az alkalmazás belépési pontja
+├── 📁 ui/                 <-- Minden frontend fájl (HTML, CSS, Képek)
+│   ├── index.html         <-- A fő UI oldal
+│   └── style.css
+└── Cargo.toml             <-- Rust függőségek</code></pre>
+                
+                <p>Ez a szerkezet lehetővé teszi, hogy a projekt növekedésével is átlátható maradjon a kód, és a <code>rust-embed</code> könnyen be tudja ágyazni a teljes <code>ui/</code> mappát a végleges binárisba.</p>
+            </div>
+        </section>
+
+        <section id="hello-world">
+            <h2>1. Hello World - Interaktív Köszöntés</h2>
+            <p>Ebben a példában egy olyan alkalmazást készítünk, ahol a felhasználó beírja a nevét, rákattint egy gombra, és a Rust backend egy Toast értesítéssel köszönti őt.</p>
+
+            <div class="step-card">
+                <h3><span class="step-number">1</span> A Felület tervezése (UI)</h3>
+                <p>A <code>head</code> részben regisztráljuk a kontrollert, a <code>body</code>-ban pedig egy azonosítóval (ID) ellátott konténert használunk az adatok összegyűjtéséhez.</p>
+                <div class="file-label">index.html</div>
+                <pre><code>&lt;alakit-meta controllers="greet" /&gt;
+
+&lt;div class="card" id="input-container"&gt;
+    &lt;h1&gt;Üdvözlünk!&lt;/h1&gt;
+    &lt;input type="text" name="user_name" placeholder="Hogy hívnak?" /&gt;
+    
+    &lt;!-- A gomb az 'input-container' ID-jú div-ből gyűjti össze az adatokat --&gt;
+    &lt;button alakit-cmd="greet:hello" alakit-form="input-container"&gt;
+        Köszönj!
+    &lt;/button&gt;
+&lt;/div&gt;</code></pre>
+            </div>
+
+            <div class="step-card">
+                <h3><span class="step-number">2</span> A Logika megírása (Rust)</h3>
+                <p>A kontrollereink a <code>handle</code> metódusban kapják meg a parancsokat. Mivel <code>alakit-form</code>-ot használtunk, az <code>args</code> paraméterben egy JSON string érkezik.</p>
+                <div class="file-label">src/controllers/greet.rs</div>
+                <pre><code>use alakit::{AlakitController, AppContext, alakit_controller};
+use serde_json::Value;
+
+#[alakit_controller("greet")]
+#[derive(Default)]
+pub struct GreetController;
+
+impl AlakitController for GreetController {
+    fn handle(&self, command: &str, args: &str, ctx: &AppContext) {
+        if command == "hello" {
+            // Adatok kinyerése a JSON stringből
+            if let Ok(data) = serde_json::from_str::&lt;Value&gt;(args) {
+                let name = data["user_name"].as_str().unwrap_or("Barátom");
+                
+                // Közvetlen UI manipuláció: Toast értesítés
+                ctx.dom.toast_success(&format!("Szia {}, üdv az Alakit világában!", name));
+            }
+        }
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="counter">
+            <h2>2. Counter App - Valódi Állapotkezelés</h2>
+            <p>Ez a példa a projektünkben is megtalálható <span class="highlight">Counter Demo</span> pontos kódja. Bemutatja a reaktív Store-t: a Rust-ban módosított érték azonnal, kód írása nélkül lefrissül a HTML-ben.</p>
+
+            <div class="step-card">
+                <h3><span class="step-number">1</span> UI és Reaktív Kötések</h3>
+                <p>Az <code>alakit-bind</code> attribútum "összeláncolja" a HTML elemet a Store egy kulcsával.</p>
+                <div class="file-label">ui/index.html</div>
+                <pre><code>&lt;!-- Binding a 'count' kulcshoz --&gt;
+&lt;div class="value" alakit-bind="count"&gt;0&lt;/div&gt;
+
+&lt;div class="controls"&gt;
+    &lt;button alakit-cmd="counter:decrement" class="btn"&gt;-&lt;/button&gt;
+    &lt;button alakit-cmd="counter:reset" class="btn secondary"&gt;Reset&lt;/button&gt;
+    &lt;button alakit-cmd="counter:increment" class="btn"&gt;+&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+            </div>
+
+            <div class="step-card">
+                <h3><span class="step-number">2</span> A Kontroller Működése</h3>
+                <p>Figyeld meg, hogy a Rust kód csak a <span class="highlight">Logikát</span> és a <span class="highlight">Store</span>-t kezeli. Nem kell megkeresnie a DOM elemeket a frissítéshez!</p>
+                <div class="file-label">src/controllers/counter.rs</div>
+                <pre><code>impl AlakitController for CounterController {
+    fn handle(&self, command: &str, _args: &str, ctx: &AppContext) {
+        // 1. Jelenlegi állapot lekérése a titkosított Store-ból
+        let current_count: i32 = ctx.store.get("count")
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(0);
+
+        // 2. Logikai döntés
+        match command {
+            "increment" => {
+                ctx.store.set("count", &(current_count + 1).to_string());
+                ctx.dom.log(&format!("Logs: {}", current_count + 1));
+            },
+            "decrement" => {
+                ctx.store.set("count", &(current_count - 1).to_string());
+            },
+            "reset" => {
+                ctx.store.set("count", "0");
+                ctx.dom.toast_info("Visszaállítva!");
+            },
+            _ => {}
+        }
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="setup">
+            <h2>3. Hogyan áll össze a projekt?</h2>
+            <p>Az Alakit alkalmazásokhoz két fő dolog kell: a függőségek beállítása és az Engine elindítása.</p>
+            
+            <div class="step-card">
+                <div class="file-label">Cargo.toml</div>
+                <pre><code>[dependencies]
+alakit = { path = "../alakit" }
+alakit_macro = { path = "../alakit_macro" }
+serde_json = "1.0"
+rust-embed = "8.1"</code></pre>
+            </div>
+
+            <div class="step-card">
+                <div class="file-label">src/main.rs</div>
+                <pre><code>#[derive(RustEmbed)]
+#[folder = "ui/"]
+struct Assets;
+
+fn main() {
+    alakit::AlakitEngine::new("Én Első Appom")
+        .with_assets::&lt;Assets&gt;()
+        .run();
+}</code></pre>
+            </div>
+        </section>
+    </main>
+
+</body>
+
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Alakit Counter</title>
+    <alakit-meta controllers="counter"></alakit-meta>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Alakit Counter Demo</h1>
+        
+        <div class="counter-box">
+            <span class="label">Current value:</span>
+            <div class="value" alakit-bind="count">2</div>
+        </div>
+
+        <div class="controls">
+            <button alakit-cmd="counter:decrement" class="btn">-</button>
+            <button alakit-cmd="counter:reset" class="btn secondary">Reset</button>
+            <button alakit-cmd="counter:increment" class="btn">+</button>
+        </div>
+        
+        <div class="info">
+            This demo demonstrates Store reactivity and Rust controllers.
+        </div>
+    </div>
+</body>
+</html>

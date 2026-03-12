@@ -1,0 +1,159 @@
+:root {
+    --bg-dark: #0f111a;
+    --card-bg: #1a1d2b;
+    --accent: #ff3e3e;
+    --text-main: #ffffff;
+    --text-dim: #a0a4b8;
+    --input-bg: rgba(255, 255, 255, 0.05);
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-main);
+    margin: 0;
+    min-height: 100vh;
+}
+
+.app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.logo .icon { font-size: 2.5rem; }
+.logo h1 { margin: 0; font-size: 1.8rem; letter-spacing: -1px; }
+
+.search-box {
+    display: flex;
+    gap: 0.5rem;
+    flex-grow: 1;
+    max-width: 600px;
+}
+
+input {
+    flex-grow: 1;
+    background: var(--input-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.8rem 1.2rem;
+    border-radius: 0.8rem;
+    color: white;
+    outline: none;
+    transition: all 0.2s;
+}
+
+input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255, 62, 62, 0.2);
+}
+
+.search-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.8rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* Movie Card Grid */
+main {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 2rem;
+}
+
+.movie-card {
+    background: var(--card-bg);
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.movie-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.poster-wrapper {
+    aspect-ratio: 2/3;
+    background: #12141d;
+    position: relative;
+    overflow: hidden;
+}
+
+.poster-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.no-poster {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+}
+
+.movie-info {
+    padding: 1.2rem;
+}
+
+.movie-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    line-height: 1.3;
+}
+
+.rating {
+    color: #ffb800;
+    font-size: 0.9rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.genres {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 5rem 0;
+    color: var(--text-dim);
+    font-size: 1.2rem;
+}
+
+footer {
+    margin-top: 5rem;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 2rem;
+}
+
+footer a { color: var(--accent); text-decoration: none; }

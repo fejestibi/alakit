@@ -1,0 +1,62 @@
+/* Alakit Core System Styles */
+
+/* 1. Toast Container - Fix pozíció a jobb felső sarokban */
+#alakit-toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    pointer-events: none; /* Ne akadályozza a kattintást alatta, ha üres */
+}
+
+/* 2. Egyedi Toast elem stílusa */
+.alakit-toast {
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 5px solid #38bdf8;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 250px;
+    max-width: 400px;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    pointer-events: auto; /* A toast maga legyen kattintható, ha kell */
+    
+    /* Animációk */
+    animation: alakit-toast-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+/* Típus-specifikus színek */
+.alakit-toast.success { border-left-color: #10b981; }
+.alakit-toast.error   { border-left-color: #ef4444; }
+.alakit-toast.warning { border-left-color: #f59e0b; }
+.alakit-toast.info    { border-left-color: #3b82f6; }
+
+/* Kifelé úszás animációhoz */
+.alakit-toast.fade-out {
+    opacity: 0;
+    transform: translateX(50px) scale(0.9);
+}
+
+@keyframes alakit-toast-in {
+    from {
+        opacity: 0;
+        transform: translateX(100px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}

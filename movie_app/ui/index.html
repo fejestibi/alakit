@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alakit Movie Catalog</title>
+    <alakit-meta controllers="movie"></alakit-meta>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">
+                <span class="icon"></span>
+                <h1>Alakit Cinema</h1>
+            </div>
+            <div class="search-box" id="search-container">
+                <input type="text" id="search-input" name="search" placeholder="Search for a movie or show..." 
+                       alakit-cmd="movie:search" alakit-event="keyup.enter">
+                <button class="search-btn" alakit-cmd="movie:search" alakit-form="search-container">
+                    Search
+                </button>
+            </div>
+        </header>
+
+        <main id="movie-list" alakit-bind="results" alakit-html>
+            <div class="empty-state">
+                <p>Type something in the search bar to explore!</p>
+            </div>
+        </main>
+
+        <footer>
+            <p>API source: <a href="https://www.tvmaze.com/api" target="_blank">TVMaze API</a></p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alakit Vault</title>
+    <!-- Alakit Engine Metadata -->
+    <alakit-meta controllers="vault"></alakit-meta>
+
+    <!-- Google Fonts for Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="app-container">
+
+        <!-- LOGIN / UNLOCK SCREEN -->
+        <div id="unlock-screen" class="glass-panel active" alakit-show="vault_locked">
+            <div class="logo">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <h1>Alakit Vault</h1>
+            </div>
+
+            <p class="subtitle">Secure In-Memory Password Manager</p>
+
+            <div class="input-group">
+                <label for="master-password">Master Password</label>
+                <input type="password" id="master-password" placeholder="Enter password to unlock..." 
+                       alakit-event="keyup.enter" alakit-cmd="vault:unlock" alakit-form="unlock-screen" />
+            </div>
+
+            <button class="primary-btn" id="btn-unlock" alakit-cmd="vault:unlock"
+                alakit-form="unlock-screen">
+                <span class="btn-text">Unlock Vault</span>
+                <span class="btn-glow"></span>
+            </button>
+        </div>
+
+        <!-- VAULT DASHBOARD -->
+        <div id="dashboard" class="glass-panel" alakit-show="vault_unlocked">
+            <div class="header">
+                <h2>My Passwords</h2>
+                <button class="icon-btn" id="btn-lock" alakit-event="click" alakit-cmd="vault:lock" title="Lock Vault">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="password-list" id="password-list">
+                <!-- Managed by Rust DOM Builder -->
+                <div class="empty-state">
+                    Loading secured passwords from AES Memory...
+                </div>
+            </div>
+
+            <!-- ADD NEW PASSWORD FAB -->
+            <button class="fab-btn" title="Add new password"
+                onclick="document.getElementById('add-modal').classList.add('active')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+
+    </div>
+
+    </div>
+
+    <script src="vault-logic.js"></script>
+
+</body>
+
+</html>

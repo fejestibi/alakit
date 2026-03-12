@@ -1,0 +1,236 @@
+:root {
+    --bg-color: #0d1117;
+    --sidebar-bg: #161b22;
+    --text-color: #c9d1d9;
+    --accent-color: #58a6ff;
+    --border-color: #30363d;
+    --code-bg: #1f242b;
+    --header-height: 60px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    display: flex;
+}
+
+/* Sidebar */
+nav {
+    width: 280px;
+    height: 100vh;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    position: fixed;
+    padding: 2rem 1.5rem;
+    overflow-y: auto;
+}
+
+nav h1 {
+    font-size: 1.5rem;
+    color: #fff;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+nav h1 span {
+    color: var(--accent-color);
+    font-weight: 300;
+}
+
+nav ul {
+    list-style: none;
+}
+
+nav ul li {
+    margin-bottom: 0.8rem;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    transition: color 0.2s;
+    display: block;
+    padding: 5px 0;
+}
+
+nav ul li a:hover {
+    color: var(--accent-color);
+}
+
+nav .version {
+    font-size: 0.8rem;
+    color: #8b949e;
+    margin-top: 2rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+
+/* Main Content */
+main {
+    margin-left: 280px;
+    padding: 4rem 10% 8rem 10%;
+    max-width: 1200px;
+    width: 100%;
+}
+
+section {
+    margin-bottom: 5rem;
+    scroll-margin-top: 2rem;
+}
+
+h2 {
+    font-size: 2.2rem;
+    color: #fff;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+}
+
+h3 {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+    margin: 2rem 0 1rem 0;
+}
+
+p {
+    margin-bottom: 1.2rem;
+}
+
+/* Code Blocks */
+pre {
+    background-color: var(--code-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    margin: 1.5rem 0;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.9rem;
+}
+
+code {
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(110, 118, 129, 0.4);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+
+pre code {
+    background: transparent;
+    padding: 0;
+}
+
+/* Tables */
+.api-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-left: 4px solid var(--accent);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-radius: 0 0.8rem 0.8rem 0;
+}
+
+.api-card h4 {
+    margin-top: 0;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.api-card p {
+    margin-bottom: 0.5rem;
+}
+
+.api-card ul {
+    margin-top: 0.5rem;
+}
+
+.api-table {
+    width: 100%;
+    margin-top: 1rem;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.2);
+    font-size: 0.9rem;
+}
+
+.api-table th {
+    background: rgba(255, 62, 62, 0.1);
+    color: var(--accent);
+    text-align: left;
+    padding: 0.8rem;
+}
+
+.api-table td {
+    padding: 0.8rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.api-table tr:last-child td {
+    border-bottom: none;
+}
+
+.api-table code {
+    color: #4ecca3;
+    background: rgba(78, 204, 163, 0.1);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.3rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2rem 0;
+}
+
+th, td {
+    border: 1px solid var(--border-color);
+    padding: 0.8rem;
+    text-align: left;
+}
+
+th {
+    background-color: var(--sidebar-bg);
+    color: #fff;
+}
+
+/* Alerts */
+.note {
+    background-color: rgba(88, 166, 255, 0.1);
+    border-left: 4px solid var(--accent-color);
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    border-radius: 4px;
+}
+
+.note strong {
+    color: var(--accent-color);
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    body {
+        flex-direction: column;
+    }
+    nav {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    main {
+        margin-left: 0;
+        padding: 2rem 5%;
+    }
+}

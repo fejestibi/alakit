@@ -1,0 +1,15 @@
+[package]
+name = "alakit_macro"
+version = "0.1.0"
+edition = "2021"
+description = "Procedural macros for the Alakit framework."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/fejestibi/alakit"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0.106"
+quote = "1.0.44"
+syn = { version = "2.0.117", features = ["full"] }

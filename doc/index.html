@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alakit Framework - Dokumentáció</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <nav>
+        <h1>ALAKIT<span>|docs</span></h1>
+        <ul>
+            <li><a href="#intro">1. Bevezetés</a></li>
+            <li><a href="#quickstart">2. Gyorsstart</a></li>
+            <li><a href="#concepts">3. Alapfogalmak</a></li>
+            <li><a href="#frontend">4. Frontend: Deklaratív HTML</a></li>
+            <li><a href="#backend">5. Backend: Rust Kontrollerek</a></li>
+            <li><a href="#store">6. Adatkezelés: Encrypted Store</a></li>
+            <li><a href="#dom-api">7. RustDOM API referencia</a></li>
+            <li><a href="#dist">8. Csomagolás & Terjesztés</a></li>
+            <li><a href="#debug">9. Hibakeresés & Diagnosztika</a></li>
+            <li><a href="examples.html" style="color: var(--accent-color); font-weight: bold;">Példa Tár (Tutorials)</a></li>
+        </ul>
+        <div class="version">Version v0.1.0-alpha</div>
+    </nav>
+
+    <main>
+        <!-- Section 1: Introduction -->
+        <section id="intro">
+            <h2>1. Bevezetés</h2>
+            <p>Az <strong>Alakit</strong> egy hibrid asztali alkalmazás-keretrendszer, amely egyesíti a modern webes
+                technológiák rugalmasságát a Rust biztonságával és teljesítményével. Nem csak egy "újabb
+                Tauri-szerűség", hanem egy merőben új megközelítés a hordozható szoftverfejlesztésben.</p>
+
+            <h3>Mi az Alakit?</h3>
+            <p>A legtöbb keretrendszer vagy túl bonyolult (Tauri), vagy vizuálisan korlátozott (egui). Az Alakit egy
+                köztes utat kínál: használj tiszta HTML/CSS-t a felülethez, de felejtsd el a JavaScript kódolást a
+                logika nagy részéhez. A "mágia" a Rust oldali deklaratív kötésben rejlik.</p>
+
+            <h3>Alapelvek</h3>
+            <ul>
+                <li><strong>No-JS (Optional):</strong> Az üzleti logika 90%-a megírható Rust-ban anélkül, hogy egy sor
+                    JavaScriptet kellene írnod.</li>
+                <li><strong>Security-first:</strong> Az érzékeny adatokat egy AES-256 alapú titkosított memóriatároló
+                    (Encrypted Store) védi.</li>
+                <li><strong>Auto-discovery:</strong> A keretrendszer automatikusan megtalálja és regisztrálja a
+                    kontrollereidet a makróknak köszönhetően.</li>
+            </ul>
+
+            <h3>Összehasonlítás</h3>
+            <table>
+                <tr>
+                    <th>Jellemző</th>
+                    <th>Alakit</th>
+                    <th>Tauri</th>
+                    <th>egui</th>
+                </tr>
+                <tr>
+                    <td>UI Technológia</td>
+                    <td>HTML5 / CSS3</td>
+                    <td>Web Stack</td>
+                    <td>Immediate Mode (Rust)</td>
+                </tr>
+                <tr>
+                    <td>Logika Helye</td>
+                    <td>Rust (Kontrollerek)</td>
+                    <td>JS + Rust (Commands)</td>
+                    <td>Rust</td>
+                </tr>
+                <tr>
+                    <td>Bináris Méret</td>
+                    <td>Kicsi (&lt; 5MB)</td>
+                    <td>Nagyon Kicsi</td>
+                    <td>Nagyon Kicsi</td>
+                </tr>
+                <tr>
+                    <td>Tanulási Görbe</td>
+                    <td>Nagyon alacsony</td>
+                    <td>Közepes / Magas</td>
+                    <td>Közepes</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Section 2: Quickstart -->
+        <section id="quickstart">
+            <h2>2. 🛠️ Gyorsstart (The 5-minute Setup)</h2>
+            <p>Kezdjük el az Alakit használatát! Egy Workspace alapú struktúrát javasolunk a tiszta szétválasztás
+                érdekében.</p>
+
+            <h3>Telepítés</h3>
+            <p>A <code>Cargo.toml</code> fájlodba add hozzá a szükséges függőségeket:</p>
+            <pre><code>[dependencies]
+alakit = { path = "../alakit" }
+alakit_macro = { path = "../alakit_macro" }
+rust-embed = "8.11"</code></pre>
+
+            <h3>Hello World</h3>
+            <p>Hozzunk létre egy egyszerű gombot, ami Rust oldalon változtat meg egy szöveget:</p>
+            <pre><code>// main.rs
+use alakit::AlakitEngine;
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "ui/"]
+struct Assets;
+
+fn main() {
+    AlakitEngine::new("Hello Alakit")
+        .with_assets::&lt;Assets&gt;()
+        .run();
+}</code></pre>
+            <pre><code>&lt;alakit-meta controllers="hello" /&gt;
+&lt;button alakit-cmd="hello:greet"&gt;Kattints ide!&lt;/button&gt;&lt;/pre&gt;
+            
+            <div class="note">
+                <strong>💡 Tanács:</strong> Ha szeretnél részletesebb, lépésről-lépésre vezető útmutatást kóddal együtt, látogasd meg a <a href="examples.html">Példa Tárat</a>!
+            </div>
+        </section>
+
+        <!-- Section 3: Concepts -->
+        <section id="concepts">
+            <h2>3. Alapfogalmak</h2>
+            <p>Az Alakit motorja egy egyedi üzenetküldési hídra (The Bridge) épül.</p>
+
+            <h3>A Híd (IPC)</h3>
+            <p>Amikor egy HTML elemre rákattintasz, az <code>alakit-cmd</code> értékét a rendszer egy IPC (Inter-Process
+                Communication) üzenetté alakítja. Ez a <code>controller:command|args</code> formátumot követi, és
+                azonnal a Rust-os <code>handle</code> metódusba érkezik.</p>
+
+            <h3>Namespace-ek</h3>
+            <div class="note">
+                <strong>Tipp:</strong> Szervezd a kontrollereidet névterek szerint (pl. <code>auth</code>,
+                <code>vault</code>, <code>settings</code>). Egy HTML oldalon több névtér is élhet egyszerre.
+            </div>
+
+            <h3>Életciklus</h3>
+            <p>1. <strong>Startup:</strong> Az <code>AlakitEngine</code> inicializálja az eseményhurkot és a
+                Webview-t.<br>
+                2. <strong>Discovery:</strong> A Rust regiszter (inventory) feltérképezi a
+                <code>#[alakit_controller]</code> makróval jelölt struct-okat.<br>
+                3. <strong>Runtime:</strong> A Store eseményeket küld, a DOM pedig frissíti magát.
+            </p>
+        </section>
+
+        <!-- Section 4: Frontend -->
+        <section id="frontend">
+            <h2>4. Frontend: A Deklaratív HTML</h2>
+            <p>Az Alakit HTML nyelve JS-mentes interakciókat tesz lehetővé speciális attribútumokon keresztül.</p>
+
+            <h3>Részletes Attribútum Referencia</h3>
+            <div class="api-card">
+                <h4><code>alakit-cmd="namespace:command"</code></h4>
+                <p>Meghatározza, hogy melyik Rust kontrollernek és melyik parancsnak küldjük az üzenetet.</p>
+            </div>
+
+            <div class="api-card">
+                <h4><code>alakit-event="esemény[.módosító]"</code></h4>
+                <p>Meghatározza, hogy melyik DOM esemény váltsa ki az IPC üzenetet. Alapértelmezett: <code>click</code>.</p>
+                
+                <table class="api-table">
+                    <thead>
+                        <tr>
+                            <th>Típus / Módosító</th>
+                            <th>Példa</th>
+                            <th>Leírás</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>click</code></td>
+                            <td><code>alakit-event="click"</code></td>
+                            <td>Alapértelmezett. Kattintáskor (vagy érintéskor) fut le.</td>
+                        </tr>
+                        <tr>
+                            <td><code>keyup.enter</code></td>
+                            <td><code>alakit-event="keyup.enter"</code></td>
+                            <td>Csak az Enter billentyű felengedésekor fut le.</td>
+                        </tr>
+                        <tr>
+                            <td><code>keyup.esc</code></td>
+                            <td><code>alakit-event="keyup.esc"</code></td>
+                            <td>Csak az Escape gomb megnyomásakor fut le.</td>
+                        </tr>
+                        <tr>
+                            <td><code>input</code></td>
+                            <td><code>alakit-event="input"</code></td>
+                            <td>Minden egyes karakter beírásakor (vagy törlésekor) lefut.</td>
+                        </tr>
+                        <tr>
+                            <td><code>change</code></td>
+                            <td><code>alakit-event="change"</code></td>
+                            <td>Csak akkor fut le, ha az elem elveszíti a fókuszt és az értéke megváltozott.</td>
+                        </tr>
+                        <tr>
+                            <td><code>mouseover</code></td>
+                            <td><code>alakit-event="mouseover"</code></td>
+                            <td>Amikor az egér az elem fölé ér.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="api-card">
+                <h4><code>alakit-form="container_id"</code></h4>
+                <p>Ha meg van adva, az Alakit összegyűjti az összes input/select/textarea adatot a megadott ID-jú konténeren belülről, és <strong>JSON</strong> formátumban küldi el a Rust oldalnak.</p>
+                <ul>
+                    <li><strong>Használat:</strong> Tökéletes összetett űrlapokhoz vagy keresőkhöz.</li>
+                </ul>
+            </div>
+
+            <div class="api-card">
+                <h4><code>alakit-args="statikus_adat"</code></h4>
+                <p>Statikus szöveges paraméter átadása a parancsnak. Ha az elem egy <code>input</code> és nincs <code>alakit-args</code>, az Alakit automatikusan az elem aktuális értékét (value) küldi el.</p>
+            </div>
+
+            <div class="api-card">
+                <h4><code>alakit-bind="key"</code></h4>
+                <p>Kétirányú kötés. Ha a Rust Store-ban megváltozik a <code>key</code> értéke, az összes ilyen attribútummal rendelkező elem frissül.</p>
+            </div>
+
+            <div class="api-card">
+                <h4><code>alakit-html</code></h4>
+                <p>Módosító az <code>alakit-bind</code> mellé. Ha jelen van, az Alakit <strong>nyers HTML-ként</strong> (innerHTML) rendereli az adatot a biztonságos szöveg (innerText) helyett.</p>
+            </div>
+
+            <div class="api-card">
+                <h4><code>alakit-show / alakit-hide</code></h4>
+                <p>Feltételes megjelenítés. Az elem láthatósága a Store értékének "truthy" (igaz) állapotától függ.</p>
+            </div>
+
+            <h3>Kézi JavaScript Hívás</h3>
+            <p>Ha egyedi JS logikából szeretnél üzenni a Rust-nak, használd a globális függvényt:</p>
+            <pre><code>alakit("namespace:command|argumentum");</code></pre>
+            <p>Ez közvetlenül az IPC csatornára küldi az üzenetet.</p>
+        </section>
+
+        <!-- Section 5: Backend -->
+        <section id="backend">
+            <h2>5. Backend: Rust Kontrollerek</h2>
+            <p>Itt történik az igazi munka. A kontrollerek felelősek a kérések feldolgozásáért.</p>
+
+            <h3>#[alakit_controller]</h3>
+            <p>Minden kontrollernek implementálnia kell az <code>AlakitController</code> traitet és használnia kell a
+                regisztrációs makrót:</p>
+            <pre><code>#[alakit_controller("vault")]
+#[derive(Default)]
+pub struct VaultController;
+
+impl AlakitController for VaultController {
+    fn handle(&self, command: &str, args: &str, ctx: &AppContext) {
+        match command {
+            "unlock" => { /* Logika itt */ },
+            _ => println!("Ismeretlen parancs"),
+        }
+    }
+}</code></pre>
+
+            <h3>Haladó minta: Automata Felfedezés (Auto-Discovery)</h3>
+            <p>Nagyobb projekteknél, ahol tucatnyi kontroller van, unalmas lehet minden fájlt kézzel beírni a <code>mod.rs</code>-be. A Vault app bemutat egy profi megoldást:</p>
+            <div class="note">
+                <strong>Hogyan működik?</strong>
+                <ol>
+                    <li>Létrehozunk egy <code>build.rs</code> fájlt, ami a fordítás előtt átfésüli a <code>src/controllers</code> mappát.</li>
+                    <li>A szkript generál egy ideiglenes Rust fájlt, ami tartalmazza az összes megtalált modult.</li>
+                    <li>A <code>mod.rs</code>-ben csak egyetlen sort kell használnunk: <code>include!(concat!(env!("OUT_DIR"), "/generated_controllers.rs"));</code></li>
+                </ol>
+                <p>Így elég csak létrehoznod egy új <code>.rs</code> fájlt a mappában, és az Alakit a következő fordításkor automatikusan regisztrálja azt.</p>
+            </div>
+        </section>
+
+        <!-- Section 6: Data Storage -->
+        <section id="store">
+            <h2>6. Adatkezelés: Az Encrypted Store</h2>
+            <p>Ez az Alakit lelke. Egy központi, titkosított memóriatároló, ami szinkronban tartja a Rust-ot és a UI-t.
+            </p>
+
+            <h3>Biztonság</h3>
+            <p>A Store nem sima String-eket tárol, hanem minden értéket <strong>AES-256-GCM</strong> algoritmussal
+                titkosít a memóriában. Az adatok csak a felhasználás pillanatában dekódolódnak.</p>
+
+            <h3>Biztonságos RAM API Referencia</h3>
+            <p>A Store API-t közvetlenül a <code>ctx.store</code> objektumon keresztül érheted el a Rust kontrollerekben.</p>
+            
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Metódus</th>
+                        <th>Argumentumok</th>
+                        <th>Leírás</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>set(key, val)</code></td>
+                        <td><code>&str, &str</code></td>
+                        <td>Titkosítva elmenti az értéket a RAM-ba és azonnal frissíti a UI-t minden kötött (bind) elemen.</td>
+                    </tr>
+                    <tr>
+                        <td><code>get(key)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Visszaadja a memóriából dekódolt értéket (<code>Option&lt;String&gt;</code>). Ha az érték sérült vagy nem létezik, <code>None</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>remove(key)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Véglegesen törli az adatot a memóriából és értesíti a UI-t az elem alaphelyzetbe állításáról.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="note" style="margin-top: 2rem;">
+                <strong>Működési mechanizmus:</strong> A <code>set</code> híváskor az Alakit aszinkron IPC üzenetet küld a Webview-nak, így a felület frissítése nem várakoztatja meg a Rust üzleti logikát.
+            </div>
+        </section>
+
+        <!-- Section 7: RustDOM API -->
+        <section id="dom-api">
+            <h2>7. RustDOM API referencia</h2>
+            <p>A RustDOM API lehetővé teszi a UI közvetlen manipulálását a Rust kontrollerek <code>handle</code> metódusából, anélkül hogy a Store-ra kellene támaszkodnod.</p>
+            
+            <h3>RustDOM (Globális műveletek)</h3>
+            <p>Ezek a metódusok a <code>ctx.dom</code> objektumon érhetőek el.</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Metódus</th>
+                        <th>Argumentumok</th>
+                        <th>Leírás</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>get_id(id)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Visszaad egy <code>Element</code> példányt, amivel az adott ID-jú HTML elemet vezérelheted.</td>
+                    </tr>
+                    <tr>
+                        <td><code>toast_success(msg)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Zöld színű siker-visszajelzés küldése a felületre.</td>
+                    </tr>
+                    <tr>
+                        <td><code>toast_error(msg)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Piros színű hibaüzenet küldése.</td>
+                    </tr>
+                    <tr>
+                        <td><code>toast_info(msg)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Kék színű információs értesítés.</td>
+                    </tr>
+                    <tr>
+                        <td><code>log(msg)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Fejlesztői üzenet küldése a browser konzolra.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 3rem;">Element (Elem-specifikus műveletek)</h3>
+            <p>Ezek a metódusok a <code>ctx.dom.get_id("...")</code> hívással kapott objektumon érhetőek el.</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Metódus</th>
+                        <th>Argumentumok</th>
+                        <th>Leírás</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>set_text(text)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Módosítja az elem belső szövegét (biztonságos).</td>
+                    </tr>
+                    <tr>
+                        <td><code>set_html(html)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Teljesen felülírja az elem belső HTML tartalmát.</td>
+                    </tr>
+                    <tr>
+                        <td><code>set_value(val)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Módosítja egy <code>input</code> vagy <code>textarea</code> értékét.</td>
+                    </tr>
+                    <tr>
+                        <td><code>add_class(name)</code></td>
+                        <td><code>&str</code></td>
+                        <td>CSS osztály hozzáadása az elemhez.</td>
+                    </tr>
+                    <tr>
+                        <td><code>remove_class(name)</code></td>
+                        <td><code>&str</code></td>
+                        <td>CSS osztály eltávolítása.</td>
+                    </tr>
+                    <tr>
+                        <td><code>set_style(p, v)</code></td>
+                        <td><code>&str, &str</code></td>
+                        <td>Közvetlen inline CSS módosítás (pl. "color", "red").</td>
+                    </tr>
+                    <tr>
+                        <td><code>set_attribute(n, v)</code></td>
+                        <td><code>&str, &str</code></td>
+                        <td>Tetszőleges HTML attribútum beállítása (pl. "disabled", "true").</td>
+                    </tr>
+                    <tr>
+                        <td><code>remove()</code></td>
+                        <td>-</td>
+                        <td>Véglegesen eltávolítja az elemet a DOM-ból.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 8: Packaging -->
+        <section id="dist">
+            <h2>8. Csomagolás és Terjesztés</h2>
+            <p>Az Alakit célja a <strong>Single Binary</strong> elosztás: egyetlen .exe fájl, amiben minden benne van.
+            </p>
+
+            <h3>Optimalizálás</h3>
+            <p>Használd a <code>rust-embed</code>-et a UI fájlok beágyazásához, így nem kell mappákat másolgatnod a
+                telepítő mellé.</p>
+            <pre><code>cargo build --release</code></pre>
+
+            <h3>Windows Védelem</h3>
+            <p>A Wry-alapú alkalmazásoknál fontos az elektronos aláírás (Code Signing), különben a Windows SmartScreen
+                figyelmeztetést dobhat. Fejlesztés alatt ezt a "More Info -> Run Anyway" opcióval kerülheted meg.</p>
+        </section>
+        <!-- Section 9: Debugging -->
+        <section id="debug">
+            <h2>9. Hibakeresés és Diagnosztika</h2>
+            <p>Az Alakit egyik legnagyobb előnye a "Remote-to-Terminal" naplózás, ami lehetővé teszi, hogy a JavaScript
+                oldali eseményeket közvetlenül a Rust konzolon lásd.</p>
+
+            <h3>Konzol Átirányítás</h3>
+            <p>Nem kell megnyitnod a böngésző fejelsztői eszközeit (DevTools), mert az Alakit automatikusan átirányítja
+                a JS naplókat:</p>
+            <ul>
+                <li><code>console.log()</code> → 🌐 [JS LOG]</li>
+                <li><code>console.warn()</code> → 🟡 [JS WARN]</li>
+                <li><code>console.error()</code> → 🔴 [JS ERROR]</li>
+            </ul>
+
+            <h3>Globális Hibakeresés</h3>
+            <p>Ha a frontend kódban váratlan hiba történik (pl. elgépelés vagy null reference), a híd azonnal elkapja
+                azt, és a Rust terminálban megjeleníti a pontos hibaüzenetet és a forrásfájl helyét.</p>
+
+            <div class="note">
+                <strong>Belső rendszer:</strong> Az Alakit a <code>alakit:log</code> IPC csatornát használja ezekre az
+                üzenetekre, így azok nem zavarják a te egyedi kontrollered logikáját.
+            </div>
+        </section>
+    </main>
+
+</body>
+
+</html>

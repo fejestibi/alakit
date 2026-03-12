@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alakit Framework - Documentation</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <nav>
+        <h1>ALAKIT<span>|docs</span></h1>
+        <ul>
+            <li><a href="#intro">1. Introduction</a></li>
+            <li><a href="#quickstart">2. Quickstart</a></li>
+            <li><a href="#concepts">3. Core Concepts</a></li>
+            <li><a href="#frontend">4. Frontend: Declarative HTML</a></li>
+            <li><a href="#backend">5. Backend: Rust Controllers</a></li>
+            <li><a href="#store">6. Transitions: Encrypted Store</a></li>
+            <li><a href="#dom-api">7. RustDOM API Reference</a></li>
+            <li><a href="#dist">8. Packaging & Distribution</a></li>
+            <li><a href="#debug">9. Debugging & Diagnostics</a></li>
+            <li><a href="examples_en.html" style="color: var(--accent-color); font-weight: bold;">Example Gallery (Tutorials)</a></li>
+        </ul>
+        <div class="version">Version v0.1.0-alpha</div>
+    </nav>
+
+    <main>
+        <!-- Section 1: Introduction -->
+        <section id="intro">
+            <h2>1. Introduction</h2>
+            <p><strong>Alakit</strong> is a hybrid desktop application framework that combines the flexibility of modern web
+                technologies with the safety and performance of Rust. It's not just "another Tauri-like" tool, but a
+                fundamentally different approach to portable software development.</p>
+
+            <h3>What is Alakit?</h3>
+            <p>Most frameworks are either too complex (Tauri) or visually limited (egui). Alakit offers a
+                middle ground: use pure HTML/CSS for the interface, but forget about JavaScript coding for the
+                vast majority of logic. The "magic" lies in the declarative binding on the Rust side.</p>
+
+            <h3>Core Principles</h3>
+            <ul>
+                <li><strong>No-JS (Optional):</strong> 90% of business logic can be written in Rust without writing a single
+                    line of JavaScript.</li>
+                <li><strong>Security-first:</strong> Sensitive data is protected by an AES-256 based encrypted memory store
+                    (Encrypted Store).</li>
+                <li><strong>Auto-discovery:</strong> The framework automatically finds and registers your
+                    controllers thanks to macros.</li>
+            </ul>
+
+            <h3>Comparison</h3>
+            <table>
+                <tr>
+                    <th>Feature</th>
+                    <th>Alakit</th>
+                    <th>Tauri</th>
+                    <th>egui</th>
+                </tr>
+                <tr>
+                    <td>UI Technology</td>
+                    <td>HTML5 / CSS3</td>
+                    <td>Web Stack</td>
+                    <td>Immediate Mode (Rust)</td>
+                </tr>
+                <tr>
+                    <td>Logic Location</td>
+                    <td>Rust (Controllers)</td>
+                    <td>JS + Rust (Commands)</td>
+                    <td>Rust</td>
+                </tr>
+                <tr>
+                    <td>Binary Size</td>
+                    <td>Small (&lt; 5MB)</td>
+                    <td>Very Small</td>
+                    <td>Very Small</td>
+                </tr>
+                <tr>
+                    <td>Learning Curve</td>
+                    <td>Very Low</td>
+                    <td>Medium / High</td>
+                    <td>Medium</td>
+                </tr>
+            </table>
+        </section>
+
+        <!-- Section 2: Quickstart -->
+        <section id="quickstart">
+            <h2>2. Quickstart (The 5-minute Setup)</h2>
+            <p>Let's get started with Alakit! We recommend a Workspace-based structure for clean separation.</p>
+
+            <h3>Installation</h3>
+            <p>Add the necessary dependencies to your <code>Cargo.toml</code> file:</p>
+            <pre><code>[dependencies]
+alakit = { path = "../alakit" }
+alakit_macro = { path = "../alakit_macro" }
+rust-embed = "8.11"</code></pre>
+
+            <h3>Hello World</h3>
+            <p>Let's create a simple button that changes a text on the Rust side:</p>
+            <pre><code>// main.rs
+use alakit::AlakitEngine;
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+#[folder = "ui/"]
+struct Assets;
+
+fn main() {
+    AlakitEngine::new("Hello Alakit")
+        .with_assets::&lt;Assets&gt;()
+        .run();
+}</code></pre>
+            <pre><code>&lt;alakit-meta controllers="hello" /&gt;
+&lt;button alakit-cmd="hello:greet"&gt;Click here!&lt;/button&gt;</code></pre>
+            
+            <div class="note">
+                <strong>💡 Tip:</strong> If you want a more detailed, step-by-step guide with code, visit the <a href="examples_en.html">Example Gallery</a>!
+            </div>
+        </section>
+
+        <!-- Section 3: Concepts -->
+        <section id="concepts">
+            <h2>3. Core Concepts</h2>
+            <p>The Alakit engine is built on a unique messaging bridge (The Bridge).</p>
+
+            <h3>The Bridge (IPC)</h3>
+            <p>When you click on an HTML element, the value of <code>alakit-cmd</code> is converted into an IPC (Inter-Process
+                Communication) message by the system. It follows the <code>controller:command|args</code> format and
+                arrives immediately in the Rust <code>handle</code> method.</p>
+
+            <h3>Namespaces</h3>
+            <div class="note">
+                <strong>Tip:</strong> Organize your controllers by namespaces (e.g., <code>auth</code>,
+                <code>vault</code>, <code>settings</code>). Multiple namespaces can coexist on a single HTML page.
+            </div>
+
+            <h3>Lifecycle</h3>
+            <p>1. <strong>Startup:</strong> The <code>AlakitEngine</code> initializes the event loop and the
+                Webview.<br>
+                2. <strong>Discovery:</strong> The Rust register (inventory) maps out the structs marked with the
+                <code>#[alakit_controller]</code> macro.<br>
+                3. <strong>Runtime:</strong> The Store sends events, and the DOM updates itself.
+            </p>
+        </section>
+
+        <!-- Section 4: Frontend -->
+        <section id="frontend">
+            <h2>4. Frontend: Declarative HTML</h2>
+            <p>Alakit's HTML language enables JS-free interactions through special attributes.</p>
+
+            <h3>Detailed Attribute Reference</h3>
+            <div class="api-card">
+                <h4><code>alakit-cmd="namespace:command"</code></h4>
+                <p>Specifies which Rust controller and command to send the message to.</p>
+            </div>
+
+            <div class="api-card">
+                <h4><code>alakit-event="event[.modifier]"</code></h4>
+                <p>Specifies which DOM event should trigger the IPC message. Default: <code>click</code>.</p>
+                
+                <table class="api-table">
+                    <thead>
+                        <tr>
+                            <th>Type / Modifier</th>
+                            <th>Example</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>click</code></td>
+                            <td><code>alakit-event="click"</code></td>
+                            <td>Default. Executes on click (or touch).</td>
+                        </tr>
+                        <tr>
+                            <td><code>keyup.enter</code></td>
+                            <td><code>alakit-event="keyup.enter"</code></td>
+                            <td>Only executes when the Enter key is released.</td>
+                        </tr>
+                        <tr>
+                            <td><code>keyup.esc</code></td>
+                            <td><code>alakit-event="keyup.esc"</code></td>
+                            <td>Only executes when the Escape key is pressed.</td>
+                        </tr>
+                        <tr>
+                            <td><code>input</code></td>
+                            <td><code>alakit-event="input"</code></td>
+                            <td>Executes on every character typed (or deleted).</td>
+                        </tr>
+                        <tr>
+                            <td><code>change</code></td>
+                            <td><code>alakit-event="change"</code></td>
+                            <td>Only executes when the element loses focus and its value has changed.</td>
+                        </tr>
+                        <tr>
+                            <td><code>mouseover</code></td>
+                            <td><code>alakit-event="mouseover"</code></td>
+                            <td>When the mouse enters the element area.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="api-card">
+                <h4><code>alakit-form="container_id"</code></h4>
+                <p>If specified, Alakit gathers all input/select/textarea data from within the container with the given ID and sends it to the Rust side in <strong>JSON</strong> format.</p>
+                <ul>
+                    <li><strong>Usage:</strong> Perfect for complex forms or search bars.</li>
+                </ul>
+            </div>
+
+            <div class="api-card">
+                <h4><code>alakit-args="static_data"</code></h4>
+                <p>Passes a static string parameter to the command. If the element is an <code>input</code> and there's no <code>alakit-args</code>, Alakit automatically sends the current value of the element.</p>
+            </div>
+
+            <div class="api-card">
+                <h4><code>alakit-bind="key"</code></h4>
+                <p>Two-way binding. If the value of <code>key</code> changes in the Rust Store, all elements with this attribute will update.</p>
+            </div>
+
+            <div class="api-card">
+                <h4><code>alakit-html</code></h4>
+                <p>Modifier for <code>alakit-bind</code>. If present, Alakit renders the data as <strong>raw HTML</strong> (innerHTML) instead of safe text (innerText).</p>
+            </div>
+
+            <div class="api-card">
+                <h4><code>alakit-show / alakit-hide</code></h4>
+                <p>Conditional rendering. The visibility of the element depends on the "truthy" state of the Store value.</p>
+            </div>
+
+            <h3>Manual JavaScript Call</h3>
+            <p>If you want to message Rust from custom JS logic, use the global function:</p>
+            <pre><code>alakit("namespace:command|argument");</code></pre>
+            <p>This sends the message directly to the IPC channel.</p>
+        </section>
+
+        <!-- Section 5: Backend -->
+        <section id="backend">
+            <h2>5. Backend: Rust Controllers</h2>
+            <p>This is where the real work happens. Controllers are responsible for processing requests.</p>
+
+            <h3>#[alakit_controller]</h3>
+            <p>Every controller must implement the <code>AlakitController</code> trait and use the
+                registration macro:</p>
+            <pre><code>#[alakit_controller("vault")]
+#[derive(Default)]
+pub struct VaultController;
+
+impl AlakitController for VaultController {
+    fn handle(&self, command: &str, args: &str, ctx: &AppContext) {
+        match command {
+            "unlock" => { /* Logic here */ },
+            _ => println!("Unknown command"),
+        }
+    }
+}</code></pre>
+
+            <h3>Advanced Pattern: Auto-Discovery</h3>
+            <p>In larger projects with dozens of controllers, it can be tedious to manually list every file in <code>mod.rs</code>. The Vault app demonstrates a professional solution:</p>
+            <div class="note">
+                <strong>How does it work?</strong>
+                <ol>
+                    <li>Crfeate a <code>build.rs</code> file that scans the <code>src/controllers</code> folder before compilation.</li>
+                    <li>The script generates a temporary Rust file containing all found modules.</li>
+                    <li>In <code>mod.rs</code>, we only need to use a single line: <code>include!(concat!(env!("OUT_DIR"), "/generated_controllers.rs"));</code></li>
+                </ol>
+                <p>This way, you just need to create a new <code>.rs</code> file in the folder, and Alakit will automatically register it during the next build.</p>
+            </div>
+        </section>
+
+        <!-- Section 6: Data Storage -->
+        <section id="store">
+            <h2>6. Data Management: The Encrypted Store</h2>
+            <p>This is the heart of Alakit. A central, encrypted memory store that keeps Rust and the UI in sync.
+            </p>
+
+            <h3>Security</h3>
+            <p>The Store doesn't store plain strings, but encrypts every value using <strong>AES-256-GCM</strong>
+                in memory. Data is decrypted only at the moment of use.</p>
+
+            <h3>Secure RAM API Reference</h3>
+            <p>You can access the Store API directly via the <code>ctx.store</code> object in Rust controllers.</p>
+            
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Arguments</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>set(key, val)</code></td>
+                        <td><code>&str, &str</code></td>
+                        <td>Encodes and saves the value to RAM and immediately updates the UI on all bound elements.</td>
+                    </tr>
+                    <tr>
+                        <td><code>get(key)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Returns the decrypted value from memory (<code>Option&lt;String&gt;</code>). Returns <code>None</code> if data is corrupted or doesn't exist.</td>
+                    </tr>
+                    <tr>
+                        <td><code>remove(key)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Permanently deletes the data from memory and notifies the UI to reset the element.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="note" style="margin-top: 2rem;">
+                <strong>Mechanism:</strong> When <code>set</code> is called, Alakit sends an asynchronous IPC message to the Webview, so the UI update doesn't block the Rust business logic.
+            </div>
+        </section>
+
+        <!-- Section 7: RustDOM API -->
+        <section id="dom-api">
+            <h2>7. RustDOM API Reference</h2>
+            <p>The RustDOM API allows direct UI manipulation from the <code>handle</code> method of Rust controllers, without relying on the Store.</p>
+            
+            <h3>RustDOM (Global Operations)</h3>
+            <p>These methods are available on the <code>ctx.dom</code> object.</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Arguments</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>get_id(id)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Returns an <code>Element</code> instance to control the HTML element with the given ID.</td>
+                    </tr>
+                    <tr>
+                        <td><code>toast_success(msg)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Sends a green success notification to the UI.</td>
+                    </tr>
+                    <tr>
+                        <td><code>toast_error(msg)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Sends a red error notification.</td>
+                    </tr>
+                    <tr>
+                        <td><code>toast_info(msg)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Sends a blue info notification.</td>
+                    </tr>
+                    <tr>
+                        <td><code>log(msg)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Sends a development message to the browser console.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 3rem;">Element (Element-specific Operations)</h3>
+            <p>These methods are available on the object returned by the <code>ctx.dom.get_id("...")</code> call.</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Arguments</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>set_text(text)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Modifies the element's inner text (safe).</td>
+                    </tr>
+                    <tr>
+                        <td><code>set_html(html)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Entirely overwrites the element's inner HTML content.</td>
+                    </tr>
+                    <tr>
+                        <td><code>set_value(val)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Modifies the value of an <code>input</code> or <code>textarea</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>add_class(name)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Adds a CSS class to the element.</td>
+                    </tr>
+                    <tr>
+                        <td><code>remove_class(name)</code></td>
+                        <td><code>&str</code></td>
+                        <td>Removes a CSS class.</td>
+                    </tr>
+                    <tr>
+                        <td><code>set_style(p, v)</code></td>
+                        <td><code>&str, &str</code></td>
+                        <td>Directly modifies inline CSS (e.g., "color", "red").</td>
+                    </tr>
+                    <tr>
+                        <td><code>set_attribute(n, v)</code></td>
+                        <td><code>&str, &str</code></td>
+                        <td>Sets an arbitrary HTML attribute (e.g., "disabled", "true").</td>
+                    </tr>
+                    <tr>
+                        <td><code>remove()</code></td>
+                        <td>-</td>
+                        <td>Permanently removes the element from the DOM.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Section 8: Packaging -->
+        <section id="dist">
+            <h2>8. Packaging and Distribution</h2>
+            <p>Alakit's goal is <strong>Single Binary</strong> distribution: one .exe file containing everything.
+            </p>
+
+            <h3>Optimization</h3>
+            <p>Use <code>rust-embed</code> to embed UI files, so you don't need to copy folders alongside the
+                installer.</p>
+            <pre><code>cargo build --release</code></pre>
+
+            <h3>Windows Protection</h3>
+            <p>For Wry-based applications, code signing is important, otherwise Windows SmartScreen
+                might throw a warning. During development, you can bypass this with "More Info -> Run Anyway".</p>
+        </section>
+        <!-- Section 9: Debugging -->
+        <section id="debug">
+            <h2>9. Debugging and Diagnostics</h2>
+            <p>One of Alakit's biggest advantages is "Remote-to-Terminal" logging, allowing you to see JavaScript
+                events directly in the Rust console.</p>
+
+            <h3>Console Redirect</h3>
+            <p>You don't need to open browser DevTools, as Alakit automatically redirects
+                JS logs:</p>
+            <ul>
+                <li><code>console.log()</code> → 🌐 [JS LOG]</li>
+                <li><code>console.warn()</code> → 🟡 [JS WARN]</li>
+                <li><code>console.error()</code> → 🔴 [JS ERROR]</li>
+            </ul>
+
+            <h3>Global Debugging</h3>
+            <p>If an unexpected error occurs in frontend code (e.g., typo or null reference), the bridge catches
+                it immediately and displays the exact error message and source file location in the Rust terminal.</p>
+
+            <div class="note">
+                <strong>Internal system:</strong> Alakit uses the <code>alakit:log</code> IPC channel for these
+                messages, so they don't interfere with your custom controller logic.
+            </div>
+        </section>
+    </main>
+
+</body>
+
+</html>

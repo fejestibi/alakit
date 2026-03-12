@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alakit Framework - Example Gallery</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        .step-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 4px solid var(--accent-color);
+            padding: 2rem;
+            margin-bottom: 3rem;
+            border-radius: 0 0.8rem 0.8rem 0;
+        }
+        .step-number {
+            background: var(--accent-color);
+            color: var(--bg-color);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .file-label {
+            display: inline-block;
+            background: var(--border-color);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-bottom: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+            border-bottom: 2px solid var(--accent-color);
+        }
+        h2 { border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 4rem; }
+        .highlight { color: var(--accent-color); font-weight: bold; }
+    </style>
+</head>
+
+<body>
+
+    <nav>
+        <h1>ALAKIT<span>|examples</span></h1>
+        <ul>
+            <li><a href="index_en.html">← Back to Home</a></li>
+            <li><a href="#setup" style="color: var(--accent-color); font-weight: bold;">0. Project Structure</a></li>
+            <li><a href="#hello-world">1. Hello World (Input & Greet)</a></li>
+            <li><a href="#counter">2. Counter App (Store & Logic)</a></li>
+        </ul>
+        <div class="version">Version v0.1.0-alpha</div>
+    </nav>
+
+    <main>
+        <h1>Alakit Practical Examples</h1>
+        <p>Learn how to use Alakit through real code examples. From "Hello World" to state management, you'll find everything here.</p>
+
+        <section id="setup">
+            <h2>How is an Alakit project structured?</h2>
+            <p>Before you start coding, it's important to understand the recommended file structure. Alakit likes clearly separated HTML (UI) and Rust (Logic) files.</p>
+
+            <div class="step-card">
+                <h3>Recommended Directory Structure</h3>
+                <pre><code>napsugar_app/
+├── 📁 src/
+│   ├── 📁 controllers/    <-- This is where Rust controllers go
+│   │   ├── mod.rs
+│   │   └── greet.rs       <-- E.g., the GreetController
+│   └── main.rs            <-- Application entry point
+├── 📁 ui/                 <-- All frontend files (HTML, CSS, Images)
+│   ├── index.html         <-- Main UI page
+│   └── style.css
+└── Cargo.toml             <-- Rust dependencies</code></pre>
+                
+                <p>This structure allows your project to remain organized as it grows, and <code>rust-embed</code> can easily include the entire <code>ui/</code> folder into the final binary.</p>
+            </div>
+        </section>
+
+        <section id="hello-world">
+            <h2>1. Hello World - Interactive Greeting</h2>
+            <p>In this example, we'll create an application where the user enters their name, clicks a button, and the Rust backend greets them with a Toast notification.</p>
+
+            <div class="step-card">
+                <h3><span class="step-number">1</span> Designing the Interface (UI)</h3>
+                <p>In the <code>head</code> section, we register the controller, and in the <code>body</code>, we use a container with an identifier (ID) to gather data.</p>
+                <div class="file-label">index.html</div>
+                <pre><code>&lt;alakit-meta controllers="greet" /&gt;
+
+&lt;div class="card" id="input-container"&gt;
+    &lt;h1&gt;Welcome!&lt;/h1&gt;
+    &lt;input type="text" name="user_name" placeholder="What's your name?" /&gt;
+    
+    &lt;!-- The button gathers data from the div with ID 'input-container' --&gt;
+    &lt;button alakit-cmd="greet:hello" alakit-form="input-container"&gt;
+        Greet me!
+    &lt;/button&gt;
+&lt;/div&gt;</code></pre>
+            </div>
+
+            <div class="step-card">
+                <h3><span class="step-number">2</span> Writing the Logic (Rust)</h3>
+                <p>Our controllers receive commands in the <code>handle</code> method. Since we used <code>alakit-form</code>, the <code>args</code> parameter arrives as a JSON string.</p>
+                <div class="file-label">src/controllers/greet.rs</div>
+                <pre><code>use alakit::{AlakitController, AppContext, alakit_controller};
+use serde_json::Value;
+
+#[alakit_controller("greet")]
+#[derive(Default)]
+pub struct GreetController;
+
+impl AlakitController for GreetController {
+    fn handle(&self, command: &str, args: &str, ctx: &AppContext) {
+        if command == "hello" {
+            // Extracting data from the JSON string
+            if let Ok(data) = serde_json::from_str::&lt;Value&gt;(args) {
+                let name = data["user_name"].as_str().unwrap_or("Friend");
+                
+                // Direct UI manipulation: Toast notification
+                ctx.dom.toast_success(&format!("Hi {}, welcome to the world of Alakit!", name));
+            }
+        }
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="counter">
+            <h2>2. Counter App - Real State Management</h2>
+            <p>This example is the exact code for the <span class="highlight">Counter Demo</span> found in our project. it demonstrates the reactive Store: the value modified in Rust updates immediately in the HTML without writing any extra code.</p>
+
+            <div class="step-card">
+                <h3><span class="step-number">1</span> UI and Reactive Bindings</h3>
+                <p>The <code>alakit-bind</code> attribute "chains" the HTML element to a key in the Store.</p>
+                <div class="file-label">ui/index.html</div>
+                <pre><code>&lt;!-- Binding to the 'count' key --&gt;
+&lt;div class="value" alakit-bind="count"&gt;0&lt;/div&gt;
+
+&lt;div class="controls"&gt;
+    &lt;button alakit-cmd="counter:decrement" class="btn"&gt;-&lt;/button&gt;
+    &lt;button alakit-cmd="counter:reset" class="btn secondary"&gt;Reset&lt;/button&gt;
+    &lt;button alakit-cmd="counter:increment" class="btn"&gt;+&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+            </div>
+
+            <div class="step-card">
+                <h3><span class="step-number">2</span> Controller Operation</h3>
+                <p>Notice that the Rust code only handles <span class="highlight">Logic</span> and the <span class="highlight">Store</span>. It doesn't need to find DOM elements to update them!</p>
+                <div class="file-label">src/controllers/counter.rs</div>
+                <pre><code>impl AlakitController for CounterController {
+    fn handle(&self, command: &str, _args: &str, ctx: &AppContext) {
+        // 1. Get current state from the encrypted Store
+        let current_count: i32 = ctx.store.get("count")
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(0);
+
+        // 2. Logical decision
+        match command {
+            "increment" => {
+                ctx.store.set("count", &(current_count + 1).to_string());
+                ctx.dom.log(&format!("Logs: {}", current_count + 1));
+            },
+            "decrement" => {
+                ctx.store.set("count", &(current_count - 1).to_string());
+            },
+            "reset" => {
+                ctx.store.set("count", "0");
+                ctx.dom.toast_info("Reset!");
+            },
+            _ => {}
+        }
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="setup-final">
+            <h2>3. How does the project come together?</h2>
+            <p>For Alakit applications, you mostly need two things: setting up dependencies and starting the Engine.</p>
+            
+            <div class="step-card">
+                <div class="file-label">Cargo.toml</div>
+                <pre><code>[dependencies]
+alakit = { path = "../alakit" }
+alakit_macro = { path = "../alakit_macro" }
+serde_json = "1.0"
+rust-embed = "8.1"</code></pre>
+            </div>
+
+            <div class="step-card">
+                <div class="file-label">src/main.rs</div>
+                <pre><code>#[derive(RustEmbed)]
+#[folder = "ui/"]
+struct Assets;
+
+fn main() {
+    alakit::AlakitEngine::new("My First App")
+        .with_assets::&lt;Assets&gt;()
+        .run();
+}</code></pre>
+            </div>
+        </section>
+    </main>
+
+</body>
+
+</html>

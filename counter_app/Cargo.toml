@@ -1,0 +1,11 @@
+[package]
+name = "counter_app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+alakit = { path = "../alakit" }
+alakit_macro = { path = "../alakit_macro" }
+rust-embed = "8.11.0"
+serde = { version = "1.0", features = ["derive"] }
+inventory = "0.3.15"

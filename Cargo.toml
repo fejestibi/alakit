@@ -1,0 +1,9 @@
+[workspace]
+members = [
+    "alakit",
+    "alakit_macro",
+    "vault_app",
+    "counter_app",
+    "movie_app",
+]
+resolver = "2"

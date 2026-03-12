@@ -1,0 +1,25 @@
+[package]
+name = "alakit"
+version = "0.1.0"
+edition = "2024"
+description = "A hybrid desktop application framework combining Rust performance with HTML/CSS flexibility."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/fejestibi/alakit"
+readme = "../README.md"
+keywords = ["desktop", "gui", "webview", "declarative", "security"]
+categories = ["gui", "os"]
+
+[dependencies]
+aes-gcm = "0.10.3"
+alakit_macro = { version = "0.1.0", path = "../alakit_macro" }
+inventory = "0.3.22"
+lazy_static = "1.5.0"
+mime_guess = "2.0.5"
+rand = "0.10.0"
+regex = "1.12.3"
+rust-embed = { version = "8.11.0", features = ["interpolate-folder-path"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+tao = "0.34.5"
+url = "2.5.8"
+wry = "0.54.2"
