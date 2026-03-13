@@ -9,7 +9,7 @@ Many frameworks are either too complex for rapid prototyping or produce excessiv
 ## Key Features
 
 * No-JS approach: Button events, form submissions, and UI value updates are tied directly to Rust code via HTML attributes.
-* Encrypted Store: Sensitive data is stored in memory using AES-256-GCM encryption, decrypted only at the moment of use.
+* Protected backend Store: Sensitive data is stored in memory using AES-256-GCM encryption on the Rust side. (Note: Due to JS runtime limitations, data displayed in the Webview exists as plaintext in RAM).
 * Low resource footprint: We focus on keeping binaries small and optimizing memory usage during runtime.
 * Flexible controller system: Thanks to macros, adding new functionality (controllers) is automatic, removing the need for manual registration.
 
