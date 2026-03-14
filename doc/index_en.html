@@ -41,53 +41,19 @@
                 fundamentally different approach to portable software development.</p>
 
             <h3>What is Alakit?</h3>
-            <p>Most frameworks are either too complex (Tauri) or visually limited (egui). Alakit offers a
-                middle ground: use pure HTML/CSS for the interface, but forget about JavaScript coding for the
-                vast majority of logic. The "magic" lies in the declarative binding on the Rust side.</p>
+            <p> Alakit offers a middle ground: use pure HTML/CSS for the interface, but forget about JavaScript coding for the
+                vast majority of logic.</p>
 
             <h3>Core Principles</h3>
             <ul>
                 <li><strong>No-JS (Optional):</strong> 90% of business logic can be written in Rust without writing a single
                     line of JavaScript.</li>
-                <li><strong>Security-first:</strong> Sensitive data is protected by an AES-256 based encrypted memory store
-                    (Encrypted Store).</li>
+                <li><strong>Encrypted Backend Store:</strong> Sensitive data is protected by AES-256 encryption, memory locking (mlock), and automatic memory clearing (zeroize) in Rust-side RAM (data is plaintext in WebView).</li>
                 <li><strong>Auto-discovery:</strong> The framework automatically finds and registers your
                     controllers thanks to macros.</li>
             </ul>
 
-            <h3>Comparison</h3>
-            <table>
-                <tr>
-                    <th>Feature</th>
-                    <th>Alakit</th>
-                    <th>Tauri</th>
-                    <th>egui</th>
-                </tr>
-                <tr>
-                    <td>UI Technology</td>
-                    <td>HTML5 / CSS3</td>
-                    <td>Web Stack</td>
-                    <td>Immediate Mode (Rust)</td>
-                </tr>
-                <tr>
-                    <td>Logic Location</td>
-                    <td>Rust (Controllers)</td>
-                    <td>JS + Rust (Commands)</td>
-                    <td>Rust</td>
-                </tr>
-                <tr>
-                    <td>Binary Size</td>
-                    <td>Small (&lt; 5MB)</td>
-                    <td>Very Small</td>
-                    <td>Very Small</td>
-                </tr>
-                <tr>
-                    <td>Learning Curve</td>
-                    <td>Very Low</td>
-                    <td>Medium / High</td>
-                    <td>Medium</td>
-                </tr>
-            </table>
+    
         </section>
 
         <!-- Section 2: Quickstart -->
@@ -282,9 +248,18 @@ impl AlakitController for VaultController {
             <p>This is the heart of Alakit. A central, encrypted memory store that keeps Rust and the UI in sync.
             </p>
 
-            <h3>Security</h3>
+            <h3>Security and Memory Protection</h3>
             <p>The Store doesn't store plain strings, but encrypts every value using <strong>AES-256-GCM</strong>
-                in memory. Data is decrypted only at the moment of use.</p>
+                in memory. Alakit pays extra attention to RAM-level protection:</p>
+            <ul>
+                <li><strong>Mlock (Memory Locking):</strong> Encryption keys are locked in physical memory (via region 3.0), preventing the OS from writing them to the swap file (disk).</li>
+                <li><strong>Zeroize:</strong> All sensitive data (keys, temporary buffers, decrypted values) are automatically overwritten with zeros in memory as soon as they are no longer needed.</li>
+            </ul>
+
+            <div class="note" style="border-left: 4px solid #e74c3c; background-color: rgba(231, 76, 60, 0.1);">
+                <strong style="color: #e74c3c;">⚠️ IMPORTANT SECURITY WARNING:</strong>
+                <p>The protection mechanisms mentioned above (encryption, mlock, zeroize) apply <strong>exclusively to the Rust-side storage</strong>. When data is sent to the frontend (Webview), it resides there in <strong>plaintext</strong> within the DOM. Therefore, it is critical not to send sensitive information to the UI unless absolutely necessary, as scripts within the Webview can access it.</p>
+            </div>
 
             <h3>Secure RAM API Reference</h3>
             <p>You can access the Store API directly via the <code>ctx.store</code> object in Rust controllers.</p>

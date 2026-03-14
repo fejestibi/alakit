@@ -27,7 +27,8 @@
             <li><a href="#dom-api">7. RustDOM API referencia</a></li>
             <li><a href="#dist">8. Csomagolás & Terjesztés</a></li>
             <li><a href="#debug">9. Hibakeresés & Diagnosztika</a></li>
-            <li><a href="examples.html" style="color: var(--accent-color); font-weight: bold;">Példa Tár (Tutorials)</a></li>
+            <li><a href="examples.html" style="color: var(--accent-color); font-weight: bold;">Példa Tár (Tutorials)</a>
+            </li>
         </ul>
         <div class="version">Version v0.1.0-alpha</div>
     </nav>
@@ -41,58 +42,27 @@
                 Tauri-szerűség", hanem egy merőben új megközelítés a hordozható szoftverfejlesztésben.</p>
 
             <h3>Mi az Alakit?</h3>
-            <p>A legtöbb keretrendszer vagy túl bonyolult (Tauri), vagy vizuálisan korlátozott (egui). Az Alakit egy
-                köztes utat kínál: használj tiszta HTML/CSS-t a felülethez, de felejtsd el a JavaScript kódolást a
-                logika nagy részéhez. A "mágia" a Rust oldali deklaratív kötésben rejlik.</p>
+            <p>Az Alakit egy köztes utat kínál: használj tiszta HTML/CSS-t a felülethez, de felejtsd el a JavaScript
+                kódolást a
+                logika nagy részéhez.</p>
 
             <h3>Alapelvek</h3>
             <ul>
-                <li><strong>No-JS (Optional):</strong> Az üzleti logika 90%-a megírható Rust-ban anélkül, hogy egy sor
+                <li><strong>No-JS (Optionális):</strong> Az üzleti logika 90%-a megírható Rust-ban anélkül, hogy egy sor
                     JavaScriptet kellene írnod.</li>
-                <li><strong>Security-first:</strong> Az érzékeny adatokat egy AES-256 alapú titkosított memóriatároló
-                    (Encrypted Store) védi.</li>
+                <li><strong>Encrypted Backend tároló</strong> Az érzékeny adatokat AES-256 alapú titkosítás,
+                    memóriazárolás (mlock) és automatikus memóriatörlés (zeroize) védi a Rust oldali RAM-ban (a
+                    WebView-ban az adat tiszta szöveg).</li>
                 <li><strong>Auto-discovery:</strong> A keretrendszer automatikusan megtalálja és regisztrálja a
                     kontrollereidet a makróknak köszönhetően.</li>
             </ul>
 
-            <h3>Összehasonlítás</h3>
-            <table>
-                <tr>
-                    <th>Jellemző</th>
-                    <th>Alakit</th>
-                    <th>Tauri</th>
-                    <th>egui</th>
-                </tr>
-                <tr>
-                    <td>UI Technológia</td>
-                    <td>HTML5 / CSS3</td>
-                    <td>Web Stack</td>
-                    <td>Immediate Mode (Rust)</td>
-                </tr>
-                <tr>
-                    <td>Logika Helye</td>
-                    <td>Rust (Kontrollerek)</td>
-                    <td>JS + Rust (Commands)</td>
-                    <td>Rust</td>
-                </tr>
-                <tr>
-                    <td>Bináris Méret</td>
-                    <td>Kicsi (&lt; 5MB)</td>
-                    <td>Nagyon Kicsi</td>
-                    <td>Nagyon Kicsi</td>
-                </tr>
-                <tr>
-                    <td>Tanulási Görbe</td>
-                    <td>Nagyon alacsony</td>
-                    <td>Közepes / Magas</td>
-                    <td>Közepes</td>
-                </tr>
-            </table>
+
         </section>
 
         <!-- Section 2: Quickstart -->
         <section id="quickstart">
-            <h2>2. 🛠️ Gyorsstart (The 5-minute Setup)</h2>
+            <h2>2. Gyorsstart (The 5-minute Setup)</h2>
             <p>Kezdjük el az Alakit használatát! Egy Workspace alapú struktúrát javasolunk a tiszta szétválasztás
                 érdekében.</p>
 
@@ -265,15 +235,19 @@ impl AlakitController for VaultController {
 }</code></pre>
 
             <h3>Haladó minta: Automata Felfedezés (Auto-Discovery)</h3>
-            <p>Nagyobb projekteknél, ahol tucatnyi kontroller van, unalmas lehet minden fájlt kézzel beírni a <code>mod.rs</code>-be. A Vault app bemutat egy profi megoldást:</p>
+            <p>Nagyobb projekteknél, ahol tucatnyi kontroller van, unalmas lehet minden fájlt kézzel beírni a
+                <code>mod.rs</code>-be. A Vault app bemutat egy profi megoldást:</p>
             <div class="note">
                 <strong>Hogyan működik?</strong>
                 <ol>
-                    <li>Létrehozunk egy <code>build.rs</code> fájlt, ami a fordítás előtt átfésüli a <code>src/controllers</code> mappát.</li>
+                    <li>Létrehozunk egy <code>build.rs</code> fájlt, ami a fordítás előtt átfésüli a
+                        <code>src/controllers</code> mappát.</li>
                     <li>A szkript generál egy ideiglenes Rust fájlt, ami tartalmazza az összes megtalált modult.</li>
-                    <li>A <code>mod.rs</code>-ben csak egyetlen sort kell használnunk: <code>include!(concat!(env!("OUT_DIR"), "/generated_controllers.rs"));</code></li>
+                    <li>A <code>mod.rs</code>-ben csak egyetlen sort kell használnunk:
+                        <code>include!(concat!(env!("OUT_DIR"), "/generated_controllers.rs"));</code></li>
                 </ol>
-                <p>Így elég csak létrehoznod egy új <code>.rs</code> fájlt a mappában, és az Alakit a következő fordításkor automatikusan regisztrálja azt.</p>
+                <p>Így elég csak létrehoznod egy új <code>.rs</code> fájlt a mappában, és az Alakit a következő
+                    fordításkor automatikusan regisztrálja azt.</p>
             </div>
         </section>
 
@@ -283,13 +257,29 @@ impl AlakitController for VaultController {
             <p>Ez az Alakit lelke. Egy központi, titkosított memóriatároló, ami szinkronban tartja a Rust-ot és a UI-t.
             </p>
 
-            <h3>Biztonság</h3>
+            <h3>Biztonság és Memóriavédelem</h3>
             <p>A Store nem sima String-eket tárol, hanem minden értéket <strong>AES-256-GCM</strong> algoritmussal
-                titkosít a memóriában. Az adatok csak a felhasználás pillanatában dekódolódnak.</p>
+                titkosít a memóriában. Az Alakit kiemelt figyelmet fordít a RAM-szintű védelemre:</p>
+            <ul>
+                <li><strong>Mlock (Memory Locking):</strong> A titkosító kulcsok le vannak zárva a fizikai memóriában
+                    (region 3.0), így az operációs rendszer nem tudja azokat a swap fájlba (lemezre) írni.</li>
+                <li><strong>Zeroize:</strong> Minden érzékeny adat (kulcsok, ideiglenes pufferek, dekódolt értékek)
+                    automatikusan felülíródik nullákkal a memóriában, amint a használatuk befejeződött.</li>
+            </ul>
+
+            <div class="note" style="border-left: 4px solid #e74c3c; background-color: rgba(231, 76, 60, 0.1);">
+                <strong style="color: #e74c3c;">⚠️ FONTOS BIZTONSÁGI FIGYELMEZTETÉS:</strong>
+                <p>A fenti védelmi mechanizmusok (titkosítás, mlock, zeroize) <strong>kizárólag a Rust oldali
+                        tárolásra</strong> vonatkoznak. Amikor egy adatot kiküldünk a frontendnek (Webview), az ott
+                    <strong>plaintext (tiszta szöveg)</strong> formában jelenik meg a DOM-ban. Ezért kritikus, hogy ne
+                    küldj ki olyan adatot a felületre, aminek ott semmi keresnivalója, mert a Webview-n belül futó
+                    scriptek hozzáférhetnek.</p>
+            </div>
 
             <h3>Biztonságos RAM API Referencia</h3>
-            <p>A Store API-t közvetlenül a <code>ctx.store</code> objektumon keresztül érheted el a Rust kontrollerekben.</p>
-            
+            <p>A Store API-t közvetlenül a <code>ctx.store</code> objektumon keresztül érheted el a Rust
+                kontrollerekben.</p>
+
             <table class="api-table">
                 <thead>
                     <tr>
@@ -302,31 +292,36 @@ impl AlakitController for VaultController {
                     <tr>
                         <td><code>set(key, val)</code></td>
                         <td><code>&str, &str</code></td>
-                        <td>Titkosítva elmenti az értéket a RAM-ba és azonnal frissíti a UI-t minden kötött (bind) elemen.</td>
+                        <td>Titkosítva elmenti az értéket a RAM-ba és azonnal frissíti a UI-t minden kötött (bind)
+                            elemen.</td>
                     </tr>
                     <tr>
                         <td><code>get(key)</code></td>
                         <td><code>&str</code></td>
-                        <td>Visszaadja a memóriából dekódolt értéket (<code>Option&lt;String&gt;</code>). Ha az érték sérült vagy nem létezik, <code>None</code>.</td>
+                        <td>Visszaadja a memóriából dekódolt értéket (<code>Option&lt;String&gt;</code>). Ha az érték
+                            sérült vagy nem létezik, <code>None</code>.</td>
                     </tr>
                     <tr>
                         <td><code>remove(key)</code></td>
                         <td><code>&str</code></td>
-                        <td>Véglegesen törli az adatot a memóriából és értesíti a UI-t az elem alaphelyzetbe állításáról.</td>
+                        <td>Véglegesen törli az adatot a memóriából és értesíti a UI-t az elem alaphelyzetbe
+                            állításáról.</td>
                     </tr>
                 </tbody>
             </table>
 
             <div class="note" style="margin-top: 2rem;">
-                <strong>Működési mechanizmus:</strong> A <code>set</code> híváskor az Alakit aszinkron IPC üzenetet küld a Webview-nak, így a felület frissítése nem várakoztatja meg a Rust üzleti logikát.
+                <strong>Működési mechanizmus:</strong> A <code>set</code> híváskor az Alakit aszinkron IPC üzenetet küld
+                a Webview-nak, így a felület frissítése nem várakoztatja meg a Rust üzleti logikát.
             </div>
         </section>
 
         <!-- Section 7: RustDOM API -->
         <section id="dom-api">
             <h2>7. RustDOM API referencia</h2>
-            <p>A RustDOM API lehetővé teszi a UI közvetlen manipulálását a Rust kontrollerek <code>handle</code> metódusából, anélkül hogy a Store-ra kellene támaszkodnod.</p>
-            
+            <p>A RustDOM API lehetővé teszi a UI közvetlen manipulálását a Rust kontrollerek <code>handle</code>
+                metódusából, anélkül hogy a Store-ra kellene támaszkodnod.</p>
+
             <h3>RustDOM (Globális műveletek)</h3>
             <p>Ezek a metódusok a <code>ctx.dom</code> objektumon érhetőek el.</p>
             <table class="api-table">
@@ -341,7 +336,8 @@ impl AlakitController for VaultController {
                     <tr>
                         <td><code>get_id(id)</code></td>
                         <td><code>&str</code></td>
-                        <td>Visszaad egy <code>Element</code> példányt, amivel az adott ID-jú HTML elemet vezérelheted.</td>
+                        <td>Visszaad egy <code>Element</code> példányt, amivel az adott ID-jú HTML elemet vezérelheted.
+                        </td>
                     </tr>
                     <tr>
                         <td><code>toast_success(msg)</code></td>
