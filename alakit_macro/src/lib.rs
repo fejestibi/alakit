@@ -18,11 +18,10 @@ pub fn alakit_controller(attr: TokenStream, item: TokenStream) -> TokenStream {
         #input
 
         // Injektálunk egy inventory::submit! blokkot minden egyedi vezérlőhöz.
-        // Feltételezi, hogy a struct implementálja a Default és AlakitController traitet.
         inventory::submit! {
             alakit::ControllerRegistration {
                 namespace: #namespace,
-                factory: || Box::new(#struct_name::default()),
+                factory: || Box::new(#struct_name::default()) as Box<dyn alakit::AlakitController + Send + Sync>,
             }
         }
     };

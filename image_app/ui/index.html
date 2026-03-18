@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alakit Natív Image Processor</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <alakit-meta controllers="image"></alakit-meta>
+
+    <div class="app-container">
+        <header>
+            <h1>Alakit Image Processor</h1>
+            <p>100% No-JS Asztali Élmény (Native OS Dialog)</p>
+        </header>
+
+        <main>
+            <div class="controls main-controls">
+                <button alakit-cmd="image:open" class="action-btn upload">Kép megnyitása...</button>
+            </div>
+
+            <div class="preview-container" id="preview_step" style="display: none;">
+                <img id="image_view" src="" alt="Kép előnézet" />
+                
+                <div class="controls filters" id="filter_buttons" style="display: none;">
+                    <button alakit-cmd="image:filter" alakit-args="grayscale" class="action-btn">Grayscale</button>
+                    <button alakit-cmd="image:filter" alakit-args="invert" class="action-btn">Invert Colors</button>
+                    <button alakit-cmd="image:filter" alakit-args="blur" class="action-btn">Gaussian Blur</button>
+                </div>
+                
+                <div class="watermark-box" id="watermark_tool" style="display: none; margin-top: 2rem; border-top: 1px solid #334; padding-top: 1rem;">
+                    <h4>Egyedi Vízjel Rajzolása (Hibrid Bináris IPC Demó)</h4>
+                    <p style="font-size: 0.8rem; color: #889;">Ide rajzolhatsz az egérrel JS segítségével, a Binary IPC pedig rásüti a Rust vasa által a nagyképre!</p>
+                    <canvas id="wm_canvas" width="400" height="150" style="border: 2px dashed #445; border-radius: 8px; margin: 10px 0; touch-action: none; background: rgba(0,0,0,0.2);"></canvas>
+                    <br>
+                    <button id="btn_apply_watermark" class="action-btn" style="background-color: #f59e0b;">Vízjel Rásütése (Binary IPC)</button>
+                    <button id="btn_clear_watermark" class="action-btn secondary">Törlés</button>
+                </div>
+
+                <div id="status_text" class="status-indicator" style="margin-top: 1rem;"></div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

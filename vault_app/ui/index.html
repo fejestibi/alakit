@@ -36,9 +36,10 @@
             <p class="subtitle">Secure In-Memory Password Manager</p>
 
             <div class="input-group">
+                
                 <label for="master-password">Master Password</label>
                 <input type="password" id="master-password" placeholder="Enter password to unlock..." 
-                       alakit-event="keyup.enter" alakit-cmd="vault:unlock" alakit-form="unlock-screen" />
+                       alakit-event="keyup.enter" alakit-cmd="vault:unlock" alakit-form="unlock-screen" /><span style="color: var(--accent); font-size: 0.8rem;">Password: alakit123</span>
             </div>
 
             <button class="primary-btn" id="btn-unlock" alakit-cmd="vault:unlock"
@@ -49,7 +50,7 @@
         </div>
 
         <!-- VAULT DASHBOARD -->
-        <div id="dashboard" class="glass-panel" alakit-show="vault_unlocked">
+        <div id="dashboard" class="glass-panel" alakit-show="vault_unlocked" style="display: none;">
             <div class="header">
                 <h2>My Passwords</h2>
                 <button class="icon-btn" id="btn-lock" alakit-event="click" alakit-cmd="vault:lock" title="Lock Vault">
@@ -69,7 +70,7 @@
 
             <!-- ADD NEW PASSWORD FAB -->
             <button class="fab-btn" title="Add new password"
-                onclick="document.getElementById('add-modal').classList.add('active')">
+                onclick="window.alakit_toast('warning', 'oh! just a demo app!')">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -85,4 +86,4 @@
 
 </body>
 
-</html>
+</html>

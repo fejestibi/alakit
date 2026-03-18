@@ -29,7 +29,7 @@
             <li><a href="#debug">9. Debugging & Diagnostics</a></li>
             <li><a href="examples_en.html" style="color: var(--accent-color); font-weight: bold;">Example Gallery (Tutorials)</a></li>
         </ul>
-        <div class="version">Version v0.1.0-alpha</div>
+        <div class="version">Version v0.2.0-alpha</div>
     </nav>
 
     <main>
@@ -100,6 +100,22 @@ fn main() {
             <p>When you click on an HTML element, the value of <code>alakit-cmd</code> is converted into an IPC (Inter-Process
                 Communication) message by the system. It follows the <code>controller:command|args</code> format and
                 arrives immediately in the Rust <code>handle</code> method.</p>
+
+            <h3>Binary IPC (For Image Processing & Big Data)</h3>
+            <p>Alakit can send not just simple texts, but <strong>massive amounts of data (e.g. image pixels, files) blazingly fast.</strong> While traditional JSON conversion would slow down the browser, the built-in <code>window.alakit_binary()</code> function transmits data to the Rust engine on a <strong>Base64+MessagePack</strong> foundation without serialization overhead.</p>
+            <div class="note">
+                <strong>How to use it?</strong>
+                <pre style="background:transparent; margin:0; padding:0;"><code>
+// On the JS Side
+const imagePixels = new Uint8Array([255, 0, 128, ...]);
+window.alakit_binary("image_controller/process", imagePixels);
+
+// On the Rust Side
+async fn handle_binary(&self, cmd: &str, payload: &[u8], ctx: AppContext) {
+    println!("Received {} bytes!", payload.len());
+}
+                </code></pre>
+            </div>
 
             <h3>Namespaces</h3>
             <div class="note">
@@ -220,8 +236,9 @@ fn main() {
 #[derive(Default)]
 pub struct VaultController;
 
+#[async_trait::async_trait]
 impl AlakitController for VaultController {
-    fn handle(&self, command: &str, args: &str, ctx: &AppContext) {
+    async fn handle(&self, command: &str, args: &str, ctx: AppContext) {
         match command {
             "unlock" => { /* Logic here */ },
             _ => println!("Unknown command"),

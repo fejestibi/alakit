@@ -56,8 +56,9 @@
             <li><a href="#setup" style="color: var(--accent-color); font-weight: bold;">0. Projekt Felépítés</a></li>
             <li><a href="#hello-world">1. Hello World (Input & Greet)</a></li>
             <li><a href="#counter">2. Counter App (Store & Logic)</a></li>
+            <li><a href="#image-app">3. Képfeldolgozó App (Natív & Bináris IPC)</a></li>
         </ul>
-        <div class="version">Version v0.1.0-alpha</div>
+        <div class="version">Version v0.2.0-alpha</div>
     </nav>
 
     <main>
@@ -117,8 +118,9 @@ use serde_json::Value;
 #[derive(Default)]
 pub struct GreetController;
 
+#[async_trait::async_trait]
 impl AlakitController for GreetController {
-    fn handle(&self, command: &str, args: &str, ctx: &AppContext) {
+    async fn handle(&self, command: &str, args: &str, ctx: AppContext) {
         if command == "hello" {
             // Adatok kinyerése a JSON stringből
             if let Ok(data) = serde_json::from_str::&lt;Value&gt;(args) {
@@ -155,8 +157,9 @@ impl AlakitController for GreetController {
                 <h3><span class="step-number">2</span> A Kontroller Működése</h3>
                 <p>Figyeld meg, hogy a Rust kód csak a <span class="highlight">Logikát</span> és a <span class="highlight">Store</span>-t kezeli. Nem kell megkeresnie a DOM elemeket a frissítéshez!</p>
                 <div class="file-label">src/controllers/counter.rs</div>
-                <pre><code>impl AlakitController for CounterController {
-    fn handle(&self, command: &str, _args: &str, ctx: &AppContext) {
+                <pre><code>#[async_trait::async_trait]
+impl AlakitController for CounterController {
+    async fn handle(&self, command: &str, _args: &str, ctx: AppContext) {
         // 1. Jelenlegi állapot lekérése a titkosított Store-ból
         let current_count: i32 = ctx.store.get("count")
             .and_then(|v| v.parse().ok())
@@ -176,6 +179,84 @@ impl AlakitController for GreetController {
                 ctx.dom.toast_info("Visszaállítva!");
             },
             _ => {}
+        }
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="image-app">
+            <h2>3. Képfeldolgozó App - Natív & Bináris IPC</h2>
+            <p>Ez a példa a legösszetettebb demonstrációnk. Bemutatja az Alakit "No-JS" filozófiájának erejét a natív operációs rendszer hívásokkal, valamint a hibrid megközelítést, amikor hatalmas adatokat (pl. rajzolt vászon) kell a böngészőből a Rust felé továbbítani <strong>Bináris IPC</strong> csatornán.</p>
+
+            <div class="step-card">
+                <h3><span class="step-number">1</span> 100% Natív No-JS Megközelítés</h3>
+                <p>Az alapvető képbekéréshez nem használunk HTML &lt;input type="file"&gt; taget és JavaScript olvasót. Helyette a HTML csak egy egyszerű hívást intéz a Rust kontroller felé, ami egy natív Windows/Mac/Linux fájlválasztó ablakot nyit meg, és közvetlenül a memóriába olvassa a képet teljesítményveszteség nélkül.</p>
+                <div class="file-label">src/controllers/image_processor.rs (Részlet)</div>
+                <pre><code>"open" => {
+    let file = FileDialog::new()
+        .add_filter("Képek", &["png", "jpg", "jpeg"])
+        .pick_file();
+
+    if let Some(path) = file {
+        match image::open(&path) {
+            Ok(img) => {
+                // Kép elmentése thread-safe Mutex memóriába feldolgozáshoz
+                let mut current = CURRENT_IMAGE.lock().unwrap();
+                *current = Some(img.clone());
+            }
+            Err(_) => { } // Hibakezelés
+        }
+    }
+}</code></pre>
+            </div>
+
+            <div class="step-card">
+                <h3><span class="step-number">2</span> Az Ultra-Gyors Bináris IPC (Vízjel funkció)</h3>
+                <p>Amikor a felhasználó a böngészőben rajzol valamit (például egy vízjelet a Canvas-ra), a JavaScript nem tudja JSON string formátumban átküldeni a sok megabájtnyi nyers pixel adatot, mert a böngésző és a háttérfolyamat is belassulna a kódolástól. Erre használjuk a beépített <code>window.alakit_binary()</code> API-t.</p>
+                <div class="file-label">ui/app.js (Vízjel beküldése)</div>
+                <pre><code>// 1. Kiszedjük a RAW RGBA pixeleket a vászonról
+const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+const pixels = new Uint8Array(imageData.data.buffer);
+
+// 2. Fejléc építése a dimenziókhoz
+const headerStr = JSON.stringify({ w: canvas.width, h: canvas.height });
+const encoder = new TextEncoder();
+const headerBytes = encoder.encode(headerStr);
+
+// 3. Csomag összeállítása: [Hossz 4 bájt] + [Header (UTF-8)] + [Pixelek]
+const payload = new Uint8Array(4 + headerBytes.length + pixels.length);
+payload[0] = headerBytes.length & 0xFF; // Kis endián kódolás
+/* ... adatok betöltése ... */
+payload.set(pixels, 4 + headerBytes.length);
+
+// 4. Ultra-Fast kérés a Rust felé "image/watermark" útvonalra
+window.alakit_binary(`image/watermark`, payload);</code></pre>
+            </div>
+
+            <div class="step-card">
+                <h3><span class="step-number">3</span> A Bináris Adat Fogadása Rust-ban</h3>
+                <p>A Rust oldalon minden kontroller implementálhatja a <code>handle_binary</code> metódust, ami kifejezetten ezeknek az előfeldolgozott bájtoknak a fogadására szolgál. Itt ismét a nagy teljesítményű <code>imageops</code> könyvtár végzi el a munkát az átkapott pixeleken.</p>
+                <div class="file-label">src/controllers/image_processor.rs (Részlet)</div>
+                <pre><code>async fn handle_binary(&self, command: &str, payload: &[u8], ctx: AppContext) {
+    if command == "watermark" {
+        // ... (Header méret és JSON feldolgozása a fenti payload alapján) ...
+        
+        // Csomag végén lévő pixel adatok
+        let pixels = &payload[4 + header_len..];
+
+        // Memóriában lévő kép lockolása
+        let mut current = CURRENT_IMAGE.lock().unwrap();
+        if let Some(img) = current.as_mut() {
+            if let Some(watermark) = RgbaImage::from_raw(w, h, pixels.to_vec()) {
+                let mut processed_img = img.clone();
+                
+                // Overlay művelet (szupergyors natív ráégetés)
+                imageops::overlay(&mut processed_img, &DynamicImage::ImageRgba8(watermark), x, y);
+
+                self.render_image_to_dom(&processed_img, &ctx, "Kész");
+                *current = Some(processed_img);
+            }
         }
     }
 }</code></pre>

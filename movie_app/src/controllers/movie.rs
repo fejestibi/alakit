@@ -4,12 +4,10 @@ use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 struct TVMazeShow {
-    _id: u32,
     name: String,
     genres: Vec<String>,
     rating: Option<Rating>,
     image: Option<Image>,
-    _summary: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -31,13 +29,12 @@ struct SearchResult {
 #[derive(Default)]
 pub struct MovieController;
 
+#[async_trait::async_trait]
 impl AlakitController for MovieController {
-    fn handle(&self, command: &str, args: &str, ctx: &AppContext) {
+    async fn handle(&self, command: &str, args: &str, ctx: AppContext) {
         match command {
             "search" => {
                 let mut query = args.to_string();
-                let store = ctx.store.clone();
-                let dom = ctx.dom.clone();
                 
                 // If source is alakit-form (JSON), extract the 'search' field
                 if query.starts_with('{') {
@@ -47,19 +44,23 @@ impl AlakitController for MovieController {
                 }
 
                 if query.trim().is_empty() {
-                    dom.toast_info("Please enter a search term!");
+                    ctx.dom.toast_info("Please enter a search term!");
                     return;
                 }
 
-                dom.log(&format!("Starting search for: {}", query));
+                ctx.dom.log(&format!("Starting search for: {}", query));
 
-                // Start async call with Tokio
-                tokio::spawn(async move {
-                    let url = format!("https://api.tvmaze.com/search/shows?q={}", query);
-                    
-                    match reqwest::get(&url).await {
-                        Ok(response) => {
-                            if let Ok(results) = response.json::<Vec<SearchResult>>().await {
+                // Direct async call without tokio::spawn wrapper since handle is already async
+                let url = format!("https://api.tvmaze.com/search/shows?q={}", query);
+                
+                println!("--> [DEBUG] Sending request to {}", url);
+                ctx.dom.log(&format!("Sending request to: {}", url));
+                
+                match reqwest::get(&url).await {
+                    Ok(response) => {
+                        println!("--> [DEBUG] Got response: {:?}", response.status());
+                        match response.json::<Vec<SearchResult>>().await {
+                            Ok(results) => {
                                 let mut html = String::new();
                                 
                                 if results.is_empty() {
@@ -87,14 +88,20 @@ impl AlakitController for MovieController {
                                     }
                                 }
                                 
-                                store.set("results", &html);
+                                ctx.store.set("results", &html);
+                            },
+                            Err(e) => {
+                                let err_msg = format!("JSON feldolgozási hiba: {}", e);
+                                println!("--> [DEBUG] {}", err_msg);
+                                ctx.dom.toast_error("Hiba a filmek betöltésekor!");
+                                ctx.dom.log(&err_msg);
                             }
-                        },
-                        Err(e) => {
-                            println!("API Error: {}", e);
                         }
+                    },
+                    Err(e) => {
+                        println!("API Error: {}", e);
                     }
-                });
+                }
             },
             _ => println!("Unknown movie command: {}", command),
         }

@@ -1,5 +1,9 @@
 # Update
 
+[0.2.0.alpha] 
+2025.03.18 - added binary IPC, migrate framework to Tokio async architecture, fixed some bugs, updated documentation.
+
+[0.1.0.alpha] 
 2025.03.14 - added Zeroize and region (mlock) protection to the Rust-side storage.
 
 # Alakit

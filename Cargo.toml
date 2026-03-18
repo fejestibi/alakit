@@ -4,6 +4,6 @@ members = [
     "alakit_macro",
     "vault_app",
     "counter_app",
-    "movie_app",
+    "movie_app", "image_app",
 ]
 resolver = "2"

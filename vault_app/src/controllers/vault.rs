@@ -6,11 +6,12 @@ use serde_json::json;
 #[alakit_controller("vault")]
 pub struct VaultController;
 
+#[async_trait::async_trait]
 impl AlakitController for VaultController {
-    fn handle(&self, command: &str, args: &str, ctx: &AppContext) {
+    async fn handle(&self, command: &str, args: &str, ctx: AppContext) {
         match command {
-            "unlock" => self.unlock_vault(ctx, args),
-            "lock" => self.lock_vault(ctx),
+            "unlock" => self.unlock_vault(&ctx, args),
+            "lock" => self.lock_vault(&ctx),
             _ => {
                 ctx.dom
                     .toast_warning(&format!("Unknown vault command: {}", command));

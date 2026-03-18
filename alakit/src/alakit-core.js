@@ -10,6 +10,26 @@ window.alakit = function (msg) {
     }
 };
 
+// --- ÚJ: Konzol Átirányítás és Hibakezelés ---
+// --------------------------------------------
+// ÚJ: Bináris IPC küldés egyedi protokolon keresztül
+window.alakit_binary = function (cmd, uint8ArrayPayload) {
+    if (!(uint8ArrayPayload instanceof Uint8Array)) {
+        console.error("alakit_binary error: A payload kötelezően Uint8Array kell, hogy legyen!");
+        return;
+    }
+    
+    // Konvertáljuk az Uint8Array bájtokat Base64 formátummá
+    let binaryStr = "";
+    for (let i = 0; i < uint8ArrayPayload.length; i++) {
+        binaryStr += String.fromCharCode(uint8ArrayPayload[i]);
+    }
+    const base64Payload = window.btoa(binaryStr);
+    
+    // Elküldjük a beépített Wry IPC csatornán egy "alakit_bin:" prefiksszel
+    window.ipc.postMessage(`alakit_bin:${cmd}|${base64Payload}`);
+};
+
 // --- ÚJ: Biztonság - Kontextus menü tiltása ---
 document.addEventListener('contextmenu', event => event.preventDefault());
 // --------------------------------------------

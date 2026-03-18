@@ -5,8 +5,9 @@ use alakit_macro::alakit_controller;
 #[derive(Default)]
 pub struct CounterController;
 
+#[async_trait::async_trait]
 impl AlakitController for CounterController {
-    fn handle(&self, command: &str, _args: &str, ctx: &AppContext) {
+    async fn handle(&self, command: &str, _args: &str, ctx: AppContext) {
         // Get current value from the Store
         let current_count: i32 = ctx.store.get("count")
             .and_then(|v| v.parse().ok())

@@ -56,8 +56,9 @@
             <li><a href="#setup" style="color: var(--accent-color); font-weight: bold;">0. Project Structure</a></li>
             <li><a href="#hello-world">1. Hello World (Input & Greet)</a></li>
             <li><a href="#counter">2. Counter App (Store & Logic)</a></li>
+            <li><a href="#image-app">3. Image Processor App (Native & Binary IPC)</a></li>
         </ul>
-        <div class="version">Version v0.1.0-alpha</div>
+        <div class="version">Version v0.2.0-alpha</div>
     </nav>
 
     <main>
@@ -117,8 +118,9 @@ use serde_json::Value;
 #[derive(Default)]
 pub struct GreetController;
 
+#[async_trait::async_trait]
 impl AlakitController for GreetController {
-    fn handle(&self, command: &str, args: &str, ctx: &AppContext) {
+    async fn handle(&self, command: &str, args: &str, ctx: AppContext) {
         if command == "hello" {
             // Extracting data from the JSON string
             if let Ok(data) = serde_json::from_str::&lt;Value&gt;(args) {
@@ -155,8 +157,9 @@ impl AlakitController for GreetController {
                 <h3><span class="step-number">2</span> Controller Operation</h3>
                 <p>Notice that the Rust code only handles <span class="highlight">Logic</span> and the <span class="highlight">Store</span>. It doesn't need to find DOM elements to update them!</p>
                 <div class="file-label">src/controllers/counter.rs</div>
-                <pre><code>impl AlakitController for CounterController {
-    fn handle(&self, command: &str, _args: &str, ctx: &AppContext) {
+                <pre><code>#[async_trait::async_trait]
+impl AlakitController for CounterController {
+    async fn handle(&self, command: &str, _args: &str, ctx: AppContext) {
         // 1. Get current state from the encrypted Store
         let current_count: i32 = ctx.store.get("count")
             .and_then(|v| v.parse().ok())
@@ -176,6 +179,84 @@ impl AlakitController for GreetController {
                 ctx.dom.toast_info("Reset!");
             },
             _ => {}
+        }
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="image-app">
+            <h2>3. Image Processor App - Native & Binary IPC</h2>
+            <p>This example is our most complex demonstration. It showcases the power of Alakit's "No-JS" philosophy using native operating system calls, as well as the hybrid approach for transferring huge amounts of data (like a drawn canvas) from the browser to Rust via the <strong>Binary IPC</strong> channel.</p>
+
+            <div class="step-card">
+                <h3><span class="step-number">1</span> 100% Native No-JS Approach</h3>
+                <p>For essential image loading, we don't use the HTML &lt;input type="file"&gt; tag and a JavaScript reader. Instead, the HTML simply makes a call to the Rust controller, which opens a native Windows/Mac/Linux file picker dialog and directly reads the image into memory without performance loss.</p>
+                <div class="file-label">src/controllers/image_processor.rs (Snippet)</div>
+                <pre><code>"open" => {
+    let file = FileDialog::new()
+        .add_filter("Images", &["png", "jpg", "jpeg"])
+        .pick_file();
+
+    if let Some(path) = file {
+        match image::open(&path) {
+            Ok(img) => {
+                // Save image to thread-safe Mutex memory for processing
+                let mut current = CURRENT_IMAGE.lock().unwrap();
+                *current = Some(img.clone());
+            }
+            Err(_) => { } // Error handling
+        }
+    }
+}</code></pre>
+            </div>
+
+            <div class="step-card">
+                <h3><span class="step-number">2</span> Ultra-Fast Binary IPC (Watermark feature)</h3>
+                <p>When a user draws something in the browser (for example, a watermark on a Canvas), JavaScript cannot transmit the megabytes of raw pixel data as a JSON string, because encoding it would slow down both the browser and backend. This is where we use the built-in <code>window.alakit_binary()</code> API.</p>
+                <div class="file-label">ui/app.js (Sending Watermark)</div>
+                <pre><code>// 1. Extract RAW RGBA pixels from the canvas
+const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+const pixels = new Uint8Array(imageData.data.buffer);
+
+// 2. Build header for dimensions
+const headerStr = JSON.stringify({ w: canvas.width, h: canvas.height });
+const encoder = new TextEncoder();
+const headerBytes = encoder.encode(headerStr);
+
+// 3. Assemble packet: [Length 4 bytes] + [Header (UTF-8)] + [Pixels]
+const payload = new Uint8Array(4 + headerBytes.length + pixels.length);
+payload[0] = headerBytes.length & 0xFF; // Little-endian encoding
+/* ... load remaining data ... */
+payload.set(pixels, 4 + headerBytes.length);
+
+// 4. Ultra-Fast request to Rust on the "image/watermark" route
+window.alakit_binary(`image/watermark`, payload);</code></pre>
+            </div>
+
+            <div class="step-card">
+                <h3><span class="step-number">3</span> Receiving Binary Data in Rust</h3>
+                <p>On the Rust side, every controller can implement the <code>handle_binary</code> method, which is specifically designed to receive these pre-processed bytes. Here, the high-performance <code>imageops</code> library takes over to manipulate the received pixels.</p>
+                <div class="file-label">src/controllers/image_processor.rs (Snippet)</div>
+                <pre><code>async fn handle_binary(&self, command: &str, payload: &[u8], ctx: AppContext) {
+    if command == "watermark" {
+        // ... (Header size and JSON parsing based on the payload above) ...
+        
+        // Pixel data at the end of the packet
+        let pixels = &payload[4 + header_len..];
+
+        // Lock image in memory
+        let mut current = CURRENT_IMAGE.lock().unwrap();
+        if let Some(img) = current.as_mut() {
+            if let Some(watermark) = RgbaImage::from_raw(w, h, pixels.to_vec()) {
+                let mut processed_img = img.clone();
+                
+                // Overlay operation (super fast native blending)
+                imageops::overlay(&mut processed_img, &DynamicImage::ImageRgba8(watermark), x, y);
+
+                self.render_image_to_dom(&processed_img, &ctx, "Done");
+                *current = Some(processed_img);
+            }
         }
     }
 }</code></pre>

@@ -68,6 +68,12 @@ impl AlakitEngine {
     }
 
     pub fn run(self) {
+        let rt = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let rt_handle = rt.handle().clone();
+
         let event_loop = EventLoopBuilder::<String>::with_user_event().build();
         let window = WindowBuilder::new()
             .with_title(&self.title)
@@ -111,10 +117,17 @@ impl AlakitEngine {
 
         let webview = WebViewBuilder::new()
             .with_devtools(cfg!(debug_assertions))
-            .with_custom_protocol("alakit".into(), move |_webview_id, request| {
+            .with_custom_protocol("alakit".into(), {
+                let proxy_ipc = proxy.clone();
+                let store_ipc = global_store.clone();
+                #[cfg(debug_assertions)]
+                let ui_dir_clone = _final_ui_dir.clone();
+                let _asset_provider_clone = self.asset_provider.clone();
+
+                move |_webview_id, request| {
                 let full_uri = request.uri().to_string();
 
-                // Asset path kinyerése a protokolból
+                // 2. Asset path kinyerése a protokolból (alakit://localhost/index.html)
                 let asset_path_str = if full_uri.contains("localhost") {
                     let parts: Vec<&str> = full_uri.split("localhost").collect();
                     parts
@@ -153,7 +166,7 @@ impl AlakitEngine {
 
                 #[cfg(not(debug_assertions))]
                 {
-                    match _asset_provider.get(&final_asset) {
+                    match _asset_provider_clone.get(&final_asset) {
                         Some(content) => {
                             let mime_type = mime_guess::from_path(&final_asset)
                                 .first_or_octet_stream()
@@ -166,13 +179,46 @@ impl AlakitEngine {
                         }
                     }
                 }
+            } // end of move closure
             })
-            .with_ipc_handler(move |req: wry::http::Request<String>| {
-                let message = req.body();
+
+            .with_ipc_handler({
+                let rt_handle = rt_handle.clone();
+                move |req: wry::http::Request<String>| {
+                let message = req.body().clone(); // Owned copy for spawn
                 let proxy_inner = proxy.clone();
                 let store_inner = global_store.clone();
 
-                if let Some((controller, rest)) = message.split_once(':') {
+                rt_handle.spawn(async move {
+                    if let Some((controller, rest)) = message.split_once(':') {
+                    // --- ALAKIT BELSŐ BIZRTI/BINÁRIS IPC ---
+                    if controller == "alakit_bin" {
+                        if let Some((target_path, base64_payload)) = rest.split_once('|') {
+                            if let Some((target_controller, target_command)) = target_path.split_once('/') {
+                                use base64::{Engine as _, engine::general_purpose};
+                                match general_purpose::STANDARD.decode(base64_payload) {
+                                    Ok(decoded_payload) => {
+                                        let ctx = AppContext {
+                                            dom: RustDOM { proxy: proxy_inner.clone() },
+                                            store: store_inner.clone(),
+                                        };
+                                        for reg in inventory::iter::<crate::core::ControllerRegistration> {
+                                            if reg.namespace == target_controller {
+                                                let controller_instance = (reg.factory)();
+                                                controller_instance.handle_binary(target_command, &decoded_payload, ctx).await;
+                                                break;
+                                            }
+                                        }
+                                    },
+                                    Err(e) => println!("🔴 [RUST/IPC ERROR] Base64 dekódolási hiba: {}", e),
+                                }
+                            } else {
+                                println!("🔴 [RUST/IPC ERROR] Érvénytelen bináris útvonal formátum: {}", target_path);
+                            }
+                        }
+                        return;
+                    }
+
                     let (command, args) = match rest.split_once('|') {
                         Some((cmd, a)) => (cmd, a),
                         None => (rest, ""),
@@ -219,12 +265,14 @@ impl AlakitEngine {
                     for reg in inventory::iter::<crate::core::ControllerRegistration> {
                         if reg.namespace == controller {
                             let controller_instance = (reg.factory)();
-                            controller_instance.handle(command, args, &ctx);
+                            controller_instance.handle(command, args, ctx).await;
                             _handled = true;
                             break;
                         }
                     }
                 }
+                }); // end of spawn
+            } // end of with_ipc_handler block closure
             })
             .with_initialization_script(&format!("{}\n{}", CORE_JS, css_injection_script))
             .with_url(&format!("alakit://localhost/{}", self.initial_url))
@@ -243,6 +291,9 @@ impl AlakitEngine {
                 }
                 _ => {}
             }
+            
+            // Runtime mozgása ne dropoljon ki
+            let _ = &rt;
         });
     }
 }
@@ -254,5 +305,6 @@ fn create_response(
     Response::builder()
         .header("Content-Type", mime_type)
         .header("Access-Control-Allow-Origin", "*")
+        .header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
         .body(Cow::Owned(body))
 }

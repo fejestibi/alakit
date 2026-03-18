@@ -12,7 +12,7 @@ struct Assets;
 fn main() {
     // Set UI path for Workspace structure
     let current_dir = env::current_dir().expect("Failed to get current dir");
-    let ui_path = current_dir.join("movie_app/ui");
+    let ui_path = current_dir.join("image_app/ui");
     
     let final_ui_path = if ui_path.exists() {
         ui_path.canonicalize().unwrap_or(ui_path)
@@ -20,9 +20,9 @@ fn main() {
         PathBuf::from("ui")
     };
 
-    println!("Starting Movie Catalog Demo...");
+    println!("Starting Image Processor Demo...");
 
-    AlakitEngine::new("Alakit Movie Catalog")
+    AlakitEngine::new("Alakit Image Processor Demo")
         .with_assets::<Assets>()
         .with_ui_dir(final_ui_path.to_str().unwrap_or("ui"))
         .with_initial_url("index.html")

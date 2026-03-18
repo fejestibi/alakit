@@ -30,7 +30,7 @@
             <li><a href="examples.html" style="color: var(--accent-color); font-weight: bold;">Példa Tár (Tutorials)</a>
             </li>
         </ul>
-        <div class="version">Version v0.1.0-alpha</div>
+        <div class="version">Version v0.2.0-alpha</div>
     </nav>
 
     <main>
@@ -105,6 +105,22 @@ fn main() {
             <p>Amikor egy HTML elemre rákattintasz, az <code>alakit-cmd</code> értékét a rendszer egy IPC (Inter-Process
                 Communication) üzenetté alakítja. Ez a <code>controller:command|args</code> formátumot követi, és
                 azonnal a Rust-os <code>handle</code> metódusba érkezik.</p>
+                
+            <h3>Bináris IPC (Képfeldolgozáshoz és Nagy adatokhoz)</h3>
+            <p>Az Alakit nemcsak egyszerű szövegeket tud küldeni, hanem <strong>hatalmas adatmennyiségeket (pl. képek pixeleit, fájlokat) is villámgyorsan.</strong> Míg a hagyományos JSON konverzió lelassítaná a böngészőt, a beépített <code>window.alakit_binary()</code> függvény <strong>Base64+MessagePack</strong> alapokon dekapituláció nélkül továbbítja az adatot a Rust motorba.</p>
+            <div class="note">
+                <strong>Hogyan használd?</strong>
+                <pre style="background:transparent; margin:0; padding:0;"><code>
+// JS Oldalon
+const keppixelek = new Uint8Array([255, 0, 128, ...]);
+window.alakit_binary("kep_vezérlo/feldolgoz", keppixelek);
+
+// Rust Oldalon
+async fn handle_binary(&self, cmd: &str, payload: &[u8], ctx: AppContext) {
+    println!("Kaptam {} bájtot!", payload.len());
+}
+                </code></pre>
+            </div>
 
             <h3>Namespace-ek</h3>
             <div class="note">
@@ -225,8 +241,9 @@ fn main() {
 #[derive(Default)]
 pub struct VaultController;
 
+#[async_trait::async_trait]
 impl AlakitController for VaultController {
-    fn handle(&self, command: &str, args: &str, ctx: &AppContext) {
+    async fn handle(&self, command: &str, args: &str, ctx: AppContext) {
         match command {
             "unlock" => { /* Logika itt */ },
             _ => println!("Ismeretlen parancs"),

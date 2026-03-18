@@ -1,12 +1,17 @@
 [package]
-name = "counter_app"
+name = "image_app"
 version = "0.2.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 alakit = { path = "../alakit" }
 alakit_macro = { path = "../alakit_macro" }
-rust-embed = "8.11.0"
+rust-embed = "8.11"
 serde = { version = "1.0", features = ["derive"] }
+image = "0.25.1"
+base64 = "0.22.1"
+rfd = "0.14"
 inventory = "0.3.15"
+lazy_static = "1.4.0"
+serde_json = "1.0"
 async-trait = "0.1"
