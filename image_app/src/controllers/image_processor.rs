@@ -7,7 +7,7 @@ use base64::{Engine as _, engine::general_purpose};
 use std::sync::Mutex;
 
 lazy_static::lazy_static! {
-    // Memóriában tároljuk az aktuálisan nyitott képet
+    // Store currently open image in memory
     static ref CURRENT_IMAGE: Mutex<Option<DynamicImage>> = Mutex::new(None);
 }
 
@@ -16,7 +16,7 @@ lazy_static::lazy_static! {
 pub struct ImageController;
 
 impl ImageController {
-    // Belső segédfüggvény a DynamicImage Base64 Jpeg-be konvertálására és DOM injektálására
+    // Helper function to convert DynamicImage to Base64 JPEG and update DOM
     fn render_image_to_dom(&self, img: &DynamicImage, ctx: &AppContext, message: &str) {
         let mut jpeg_data: Vec<u8> = Vec::new();
         let start_time = std::time::Instant::now();
@@ -88,7 +88,7 @@ impl AlakitController for ImageController {
                     }
                     
                     self.render_image_to_dom(&processed_img, &ctx, &format!("Filter ({}): Kész", args));
-                    *current = Some(processed_img); // Eredmény mentése további módosításokhoz
+                    *current = Some(processed_img); // Save processed state
                 } else {
                     ctx.dom.toast_error("Nincs megnyitott kép!");
                 }
@@ -135,7 +135,7 @@ impl AlakitController for ImageController {
                 let mut processed_img = img.clone();
                 let watermark_dynamic = DynamicImage::ImageRgba8(watermark);
                 
-                // Középre pozícionáljuk a vízjelet (vagy felülre)
+                // Position watermark in the center
                 let x = (processed_img.width().saturating_sub(w)) / 2;
                 let y = (processed_img.height().saturating_sub(h)) / 2;
 

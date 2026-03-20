@@ -1,16 +1,11 @@
-mod controllers;
-
 use alakit::AlakitEngine;
-use rust_embed::RustEmbed;
+use alakit_macro::{alakit_assets, alakit_main};
 use std::env;
 use std::path::PathBuf;
 
-#[derive(RustEmbed)]
-#[folder = "ui/"]
-struct Assets;
-
+#[alakit_main]
 fn main() {
-    // Set UI path for Workspace structure
+    // Set UI path for the Workspace structure
     let current_dir = env::current_dir().expect("Failed to get current dir");
     let ui_path = current_dir.join("counter_app/ui");
     
@@ -23,7 +18,7 @@ fn main() {
     println!("Starting Counter Demo...");
 
     AlakitEngine::new("Alakit Counter Demo")
-        .with_assets::<Assets>()
+        .embed_ui(alakit_assets!("ui/"))
         .with_ui_dir(final_ui_path.to_str().unwrap_or("ui"))
         .with_initial_url("index.html")
         .run();

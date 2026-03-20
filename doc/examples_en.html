@@ -74,15 +74,14 @@
                 <pre><code>napsugar_app/
 ├── 📁 src/
 │   ├── 📁 controllers/    <-- This is where Rust controllers go
-│   │   ├── mod.rs
-│   │   └── greet.rs       <-- E.g., the GreetController
+│   │   └── greet.rs       <-- E.g., the GreetController (no mod.rs required!)
 │   └── main.rs            <-- Application entry point
-├── 📁 ui/                 <-- All frontend files (HTML, CSS, Images)
+├── 📁 ui/                 <-- All frontend files (HTML, CSS, Mmedia)
 │   ├── index.html         <-- Main UI page
 │   └── style.css
 └── Cargo.toml             <-- Rust dependencies</code></pre>
                 
-                <p>This structure allows your project to remain organized as it grows, and <code>rust-embed</code> can easily include the entire <code>ui/</code> folder into the final binary.</p>
+                <p>This structure allows your project to remain organized as it grows, and the <code>alakit_assets!</code> macro can easily encrypt and include the entire <code>ui/</code> folder into the final executable.</p>
             </div>
         </section>
 
@@ -272,19 +271,17 @@ window.alakit_binary(`image/watermark`, payload);</code></pre>
                 <pre><code>[dependencies]
 alakit = { path = "../alakit" }
 alakit_macro = { path = "../alakit_macro" }
-serde_json = "1.0"
-rust-embed = "8.1"</code></pre>
+serde_json = "1.0"</code></pre>
             </div>
 
             <div class="step-card">
                 <div class="file-label">src/main.rs</div>
-                <pre><code>#[derive(RustEmbed)]
-#[folder = "ui/"]
-struct Assets;
+                <pre><code>use alakit_macro::{alakit_assets, alakit_main};
 
+#[alakit_main]
 fn main() {
     alakit::AlakitEngine::new("My First App")
-        .with_assets::&lt;Assets&gt;()
+        .embed_ui(alakit_assets!("ui/"))
         .run();
 }</code></pre>
             </div>

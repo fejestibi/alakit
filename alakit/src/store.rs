@@ -7,7 +7,7 @@ use std::sync::{Arc, RwLock};
 use tao::event_loop::EventLoopProxy;
 use zeroize::{Zeroize, Zeroizing};
 
-/// Biztonságos kulcs-tároló, amely zárolja a memóriát az mlock segítségével.
+/// Secure key store that locks memory using mlock.
 struct ProtectedKey {
     key: Key<Aes256Gcm>,
     _handle: Option<region::LockGuard>,
@@ -15,7 +15,7 @@ struct ProtectedKey {
 
 impl ProtectedKey {
     fn new(key: Key<Aes256Gcm>) -> Self {
-        // Megpróbáljuk zárolni a memóriát, hogy ne kerüljön swap-ba (region 3.0)
+        // Lock memory region (mlock) against swapping (region 3.0)
         let handle = unsafe {
             region::lock(key.as_ptr(), key.len()).ok()
         };
@@ -27,18 +27,18 @@ impl ProtectedKey {
     }
 }
 
-// Biztosítjuk, hogy a kulcs törlődjön a memóriából, ha a struktúra felszabadul
+// Automatic data clearing (zeroize) on memory deallocation
 impl Drop for ProtectedKey {
     fn drop(&mut self) {
         self.key.as_mut_slice().zeroize();
     }
 }
 
-/// Automatikusan frissülő, szálbiztos Állapottároló AES-GCM in-memory titkosítással.
-/// Most már Zeroize és mlock támogatással a fokozott biztonság érdekében.
+/// Thread-safe State Store with AES-GCM in-memory encryption,
+/// Zeroize and mlock memory protection.
 #[derive(Clone)]
 pub struct Store {
-    // A titkosított adatokat és nonce-okat is Zeroizing-olt pufferekben tároljuk
+    // Store cryptographic data in Zeroizing buffers
     data: Arc<RwLock<HashMap<String, (Zeroizing<Vec<u8>>, Zeroizing<Vec<u8>>)>>>,
     proxy: EventLoopProxy<String>,
     key: Arc<ProtectedKey>,
@@ -55,17 +55,17 @@ impl Store {
         }
     }
 
-    /// Titkosítva beállít egy értéket a memóriában ÉS tiszta IPC hívással frissíti a UI-t dekódolva.
+    /// Set value encrypted, then update UI state.
     pub fn set(&self, key: &str, value: &str) {
         let cipher = Aes256Gcm::new(&self.key.key);
         let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
 
-        // A plaintext értéket Zeroizing burkolóba tesszük, hogy használat után törlődjön
+        // Temporary plaintext buffer with secure clearing
         let plaintext = Zeroizing::new(value.as_bytes().to_vec());
         
         let ciphertext = cipher
             .encrypt(&nonce, plaintext.as_ref())
-            .expect("Hiba az in-memory titkosítás során!");
+            .expect("In-memory encryption failed!");
 
         {
             let mut w = self.data.write().unwrap();
@@ -83,7 +83,7 @@ impl Store {
         let _ = self.proxy.send_event(js);
     }
 
-    /// Kinyeri és memória-szinten visszafejti az értéket.
+    /// Extracts and decrypts the value at memory level.
     pub fn get(&self, key: &str) -> Option<String> {
         let r = self.data.read().unwrap();
 
@@ -93,13 +93,13 @@ impl Store {
 
             match cipher.decrypt(nonce, ciphertext.as_ref()) {
                 Ok(plaintext_bytes) => {
-                    // A visszafejtett bájtokat is Zeroizing-ba tesszük menet közben
+                    // Protection of decrypted bytes
                     let plaintext_wrap = Zeroizing::new(plaintext_bytes);
                     String::from_utf8(plaintext_wrap.to_vec()).ok()
                 }
                 Err(_) => {
                     println!(
-                        "[ALAKIT BIZTONSÁG] Hiba az adat visszabontásában a RAM-ból!"
+                        "[ALAKIT SECURITY] Error decrypting data from RAM!"
                     );
                     None
                 }
@@ -109,11 +109,11 @@ impl Store {
         }
     }
 
-    /// Töröl egy kulcsot a tárolóból és értesíti a UI-t.
+    /// Removes a key from the store and notifies the UI.
     pub fn remove(&self, key: &str) {
         {
             let mut w = self.data.write().unwrap();
-            // A HashMap-ből való eltávolításkor a Zeroizing drop-ja automatikusan törli a memóriát
+            // Removal from the HashMap triggers the Zeroizing drop method
             w.remove(key);
         }
 

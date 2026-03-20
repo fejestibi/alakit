@@ -70,24 +70,20 @@
             <p>A <code>Cargo.toml</code> fájlodba add hozzá a szükséges függőségeket:</p>
             <pre><code>[dependencies]
 alakit = { path = "../alakit" }
-alakit_macro = { path = "../alakit_macro" }
-rust-embed = "8.11"</code></pre>
+alakit_macro = { path = "../alakit_macro" }</code></pre>
 
             <h3>Hello World</h3>
             <p>Hozzunk létre egy egyszerű gombot, ami Rust oldalon változtat meg egy szöveget:</p>
             <pre><code>// main.rs
-use alakit::AlakitEngine;
-use rust_embed::RustEmbed;
-
-#[derive(RustEmbed)]
-#[folder = "ui/"]
-struct Assets;
-
-fn main() {
-    AlakitEngine::new("Hello Alakit")
-        .with_assets::&lt;Assets&gt;()
-        .run();
-}</code></pre>
+    use alakit::AlakitEngine;
+    use alakit_macro::{alakit_main, alakit_assets};
+    
+    #[alakit_main]
+    fn main() {
+        AlakitEngine::new("Hello Alakit")
+            .embed_ui(alakit_assets!("ui/"))
+            .run();
+    }</code></pre>
             <pre><code>&lt;alakit-meta controllers="hello" /&gt;
 &lt;button alakit-cmd="hello:greet"&gt;Kattints ide!&lt;/button&gt;&lt;/pre&gt;
             
@@ -251,20 +247,12 @@ impl AlakitController for VaultController {
     }
 }</code></pre>
 
-            <h3>Haladó minta: Automata Felfedezés (Auto-Discovery)</h3>
+            <h3>Automata Felfedezés (Auto-Discovery) Zero-Boilerplate</h3>
             <p>Nagyobb projekteknél, ahol tucatnyi kontroller van, unalmas lehet minden fájlt kézzel beírni a
-                <code>mod.rs</code>-be. A Vault app bemutat egy profi megoldást:</p>
+                <code>mod.rs</code>-be. Erre találtuk ki az <code>#[alakit_main]</code> makrót!</p>
             <div class="note">
                 <strong>Hogyan működik?</strong>
-                <ol>
-                    <li>Létrehozunk egy <code>build.rs</code> fájlt, ami a fordítás előtt átfésüli a
-                        <code>src/controllers</code> mappát.</li>
-                    <li>A szkript generál egy ideiglenes Rust fájlt, ami tartalmazza az összes megtalált modult.</li>
-                    <li>A <code>mod.rs</code>-ben csak egyetlen sort kell használnunk:
-                        <code>include!(concat!(env!("OUT_DIR"), "/generated_controllers.rs"));</code></li>
-                </ol>
-                <p>Így elég csak létrehoznod egy új <code>.rs</code> fájlt a mappában, és az Alakit a következő
-                    fordításkor automatikusan regisztrálja azt.</p>
+                <p>Ha ezt ráteszed a <code>main</code> függvényre, a makró teljesen transzparensen beolvassa a <code>src/controllers</code> könyvtárat, beemeli az összes fájlt modulként és lefuttatja a teljes regisztrációt a háttérben. Se <code>build.rs</code>-re, se <code>mod.rs</code>-re nem lesz soha többé szükséged!</p>
             </div>
         </section>
 
@@ -440,8 +428,8 @@ impl AlakitController for VaultController {
             <p>Az Alakit célja a <strong>Single Binary</strong> elosztás: egyetlen .exe fájl, amiben minden benne van.
             </p>
 
-            <h3>Optimalizálás</h3>
-            <p>Használd a <code>rust-embed</code>-et a UI fájlok beágyazásához, így nem kell mappákat másolgatnod a
+            <h3>Asset Encryption</h3>
+            <p>Az Alakit beépített védelmet nyújt a felületednek. Az <code>alakit_assets!("ui/")</code> makró minden fordításidőben egyedi titkosító kulcsot generál, elkódolja a fájljaidat, és <strong>csak a kriptográfiai adatokat</strong> menti be az <code>.exe</code> fájlba. Így a Hex Editorok és az Unpackerek (vagy bármely átlagos visszafejtő szoftver) nem tudják ellopni a kódodat. Ráadásul az Alakit dedikált "Inkognitó Módot" használ a böngészőmotorban, így menet közben sem írja ki a fájlokat fizikai lemezre (sem az AppData-ba, sem sehova máshova)!</p>
                 telepítő mellé.</p>
             <pre><code>cargo build --release</code></pre>
 

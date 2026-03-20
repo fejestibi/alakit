@@ -244,10 +244,10 @@ window.alakit_toast = function (type, message) {
     toast.className = `alakit-toast ${type}`;
 
     // Ikon kiválasztása típus alapján
-    let icon = 'ℹ️';
-    if (type === 'success') icon = '✅';
-    if (type === 'error') icon = '❌';
-    if (type === 'warning') icon = '⚠️';
+    let icon = '';
+    if (type === 'success') icon = '';
+    if (type === 'error') icon = '';
+    if (type === 'warning') icon = '';
 
     toast.innerHTML = `<span style="font-size: 1.2rem;">${icon}</span> <span>${message}</span>`;
 

@@ -22,25 +22,25 @@ impl AlakitController for VaultController {
 
 impl VaultController {
     fn unlock_vault(&self, ctx: &AppContext, args: &str) {
-        // 1. Get the master password from the JSON sent by alakit-form
+        // Extract master password from JSON format
         let data: serde_json::Value = serde_json::from_str(args).unwrap_or_default();
         let master_pwd = data["master-password"].as_str().unwrap_or("");
 
-        // 2. Simulated check
+        // Simulated authentication
         if master_pwd == "alakit123" {
-            // SUCCESSFUL LOGIN:
-            // 3. Load data into the AES Encrypted Store for "Production" simulation.
+            // SUCCESSFUL LOGIN
+            // Load data into AES encrypted memory
             self.load_secured_credentials(ctx);
 
-            // 4. State switch: Set the Vault to unlocked state
+            // State transition: unlocked vault
             ctx.store.set("vault_unlocked", "true");
             ctx.store.set("vault_locked", "false");
 
-            // 5. Send Toast
+            // Feedback to the user
             ctx.dom
                 .toast_success("Vault Unlocked! AES-256 Memory Activated.");
 
-            // 6. Cleanup: Clear the password input for security
+            // Security wipe: clear password field
             ctx.dom.get_element_by_id("master-password").set_value("");
         } else {
             // WRONG PASSWORD
@@ -51,10 +51,10 @@ impl VaultController {
 
     fn lock_vault(&self, ctx: &AppContext) {
         // LOCKING
-        // Clear everything from the AES Store to maintain security
+        // Clear AES Store data from memory
         ctx.store.remove("vault_data");
 
-        // Close Reactive UI
+        // Close reactive UI
         ctx.store.set("vault_unlocked", "false");
         ctx.store.set("vault_locked", "true");
 
@@ -68,18 +68,18 @@ impl VaultController {
             json!({"service": "Banking App", "user": "admin", "pass": "$uperS3cr3tB@nk!"}),
         ];
 
-        // Put into the Crypt Store. In memory, this is now just binary AES blob:
+        // Store in the encrypted Store
         let stringified_creds = serde_json::to_string(&creds).unwrap();
         ctx.store.set("vault_data", &stringified_creds);
 
-        // Render to HTML using the DOM Builder
+        // Generate HTML and update DOM
         let mut html_cards = String::new();
         for item in creds {
             let srv = item["service"].as_str().unwrap();
             let usr = item["user"].as_str().unwrap();
             let pwd = item["pass"].as_str().unwrap();
 
-            // Link the JavaScript clipboard copy call
+            // Bind JavaScript clipboard copy link
             html_cards.push_str(&format!(
                 r#"
                 <div class="pwd-item">

@@ -14,13 +14,13 @@ use tao::{
 };
 use wry::{WebViewBuilder, http::Response};
 
-/// Trait az aszettek (HTML, CSS, JS) eléréséhez.
-/// Release módban ez biztosítja a binárisba ágyazott fájlok elérését.
+/// Trait for accessing assets (HTML, CSS, JS).
+/// Provides access to files embedded in the binary in release mode.
 pub trait AssetProvider: Send + Sync + 'static {
     fn get(&self, path: &str) -> Option<Cow<'static, [u8]>>;
 }
 
-/// Alapértelmezett üres provider
+/// Default empty provider
 pub struct NoAssets;
 impl AssetProvider for NoAssets {
     fn get(&self, _path: &str) -> Option<Cow<'static, [u8]>> {
@@ -45,15 +45,10 @@ impl AlakitEngine {
         }
     }
 
-    /// Beállítja a beágyazott aszetteket szolgáltató típust.
-    pub fn with_assets<T: rust_embed::RustEmbed + Send + Sync + 'static>(mut self) -> Self {
-        struct EmbedProvider<T>(std::marker::PhantomData<T>);
-        impl<T: rust_embed::RustEmbed + Send + Sync + 'static> AssetProvider for EmbedProvider<T> {
-            fn get(&self, path: &str) -> Option<Cow<'static, [u8]>> {
-                T::get(path).map(|f| f.data)
-            }
-        }
-        self.asset_provider = Arc::new(EmbedProvider::<T>(std::marker::PhantomData));
+    /// Sets encrypted and embedded UI files for the application.
+    /// Usage: `.embed_ui(alakit_assets!("ui"))`
+    pub fn embed_ui<T: AssetProvider + 'static>(mut self, provider: Arc<T>) -> Self {
+        self.asset_provider = provider;
         self
     }
 
@@ -81,7 +76,7 @@ impl AlakitEngine {
             .build(&event_loop)
             .unwrap();
 
-        // UI mappa rögzítése.
+        // Resolve UI folder.
         let _final_ui_dir = self.ui_dir.canonicalize().unwrap_or(self.ui_dir.clone());
 
         const CORE_JS: &str = include_str!("alakit-core.js");
@@ -116,6 +111,7 @@ impl AlakitEngine {
         );
 
         let webview = WebViewBuilder::new()
+            .with_incognito(true) // Critical security layer for protecting in-memory files
             .with_devtools(cfg!(debug_assertions))
             .with_custom_protocol("alakit".into(), {
                 let proxy_ipc = proxy.clone();
@@ -127,7 +123,7 @@ impl AlakitEngine {
                 move |_webview_id, request| {
                 let full_uri = request.uri().to_string();
 
-                // 2. Asset path kinyerése a protokolból (alakit://localhost/index.html)
+                // 2. Extract Asset path from protocol (alakit://localhost/index.html)
                 let asset_path_str = if full_uri.contains("localhost") {
                     let parts: Vec<&str> = full_uri.split("localhost").collect();
                     parts
@@ -191,7 +187,7 @@ impl AlakitEngine {
 
                 rt_handle.spawn(async move {
                     if let Some((controller, rest)) = message.split_once(':') {
-                    // --- ALAKIT BELSŐ BIZRTI/BINÁRIS IPC ---
+                    // Internal binary communication (alakit_bin)
                     if controller == "alakit_bin" {
                         if let Some((target_path, base64_payload)) = rest.split_once('|') {
                             if let Some((target_controller, target_command)) = target_path.split_once('/') {
@@ -210,10 +206,10 @@ impl AlakitEngine {
                                             }
                                         }
                                     },
-                                    Err(e) => println!("🔴 [RUST/IPC ERROR] Base64 dekódolási hiba: {}", e),
+                                    Err(e) => println!("[RUST/IPC ERROR] Base64 decoding error: {}", e),
                                 }
                             } else {
-                                println!("🔴 [RUST/IPC ERROR] Érvénytelen bináris útvonal formátum: {}", target_path);
+                                println!("[RUST/IPC ERROR] Invalid binary path format: {}", target_path);
                             }
                         }
                         return;
@@ -224,7 +220,7 @@ impl AlakitEngine {
                         None => (rest, ""),
                     };
 
-                    // --- BELSŐ ALAKIT PARANCSOK KEZELÉSE ---
+                    // Process standard commands
                     if controller == "alakit" {
                         match command {
                             "log" => {
@@ -234,9 +230,9 @@ impl AlakitEngine {
                                     let level = log_data["level"].as_str().unwrap_or("info");
                                     let msg = log_data["msg"].as_str().unwrap_or("");
                                     match level {
-                                        "error" => println!("🔴 [JS ERROR] {}", msg),
-                                        "warn" => println!("🟡 [JS WARN]  {}", msg),
-                                        _ => println!("🌐 [JS LOG]   {}", msg),
+                                        "error" => println!("[JS ERROR] {}", msg),
+                                        "warn" => println!("[JS WARN]  {}", msg),
+                                        _ => println!("[JS LOG]   {}", msg),
                                     }
                                 }
                             }
@@ -251,7 +247,7 @@ impl AlakitEngine {
                                     }
                                 }
                             }
-                            _ => println!("⚠️ [ALAKIT] Ismeretlen belső parancs: {}", command),
+                            _ => println!("[ALAKIT] Unknown internal command: {}", command),
                         }
                         return;
                     }
@@ -292,7 +288,7 @@ impl AlakitEngine {
                 _ => {}
             }
             
-            // Runtime mozgása ne dropoljon ki
+            // Prevent runtime from dropping
             let _ = &rt;
         });
     }

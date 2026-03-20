@@ -58,31 +58,27 @@
 
         <!-- Section 2: Quickstart -->
         <section id="quickstart">
-            <h2>2. Quickstart (The 5-minute Setup)</h2>
+            <h2>2. Quickstart</h2>
             <p>Let's get started with Alakit! We recommend a Workspace-based structure for clean separation.</p>
 
             <h3>Installation</h3>
             <p>Add the necessary dependencies to your <code>Cargo.toml</code> file:</p>
             <pre><code>[dependencies]
 alakit = { path = "../alakit" }
-alakit_macro = { path = "../alakit_macro" }
-rust-embed = "8.11"</code></pre>
+alakit_macro = { path = "../alakit_macro" }</code></pre>
 
             <h3>Hello World</h3>
             <p>Let's create a simple button that changes a text on the Rust side:</p>
             <pre><code>// main.rs
-use alakit::AlakitEngine;
-use rust_embed::RustEmbed;
-
-#[derive(RustEmbed)]
-#[folder = "ui/"]
-struct Assets;
-
-fn main() {
-    AlakitEngine::new("Hello Alakit")
-        .with_assets::&lt;Assets&gt;()
-        .run();
-}</code></pre>
+    use alakit::AlakitEngine;
+    use alakit_macro::{alakit_main, alakit_assets};
+    
+    #[alakit_main]
+    fn main() {
+        AlakitEngine::new("Hello Alakit")
+            .embed_ui(alakit_assets!("ui/"))
+            .run();
+    }</code></pre>
             <pre><code>&lt;alakit-meta controllers="hello" /&gt;
 &lt;button alakit-cmd="hello:greet"&gt;Click here!&lt;/button&gt;</code></pre>
             
@@ -246,16 +242,11 @@ impl AlakitController for VaultController {
     }
 }</code></pre>
 
-            <h3>Advanced Pattern: Auto-Discovery</h3>
-            <p>In larger projects with dozens of controllers, it can be tedious to manually list every file in <code>mod.rs</code>. The Vault app demonstrates a professional solution:</p>
+            <h3>Auto-Discovery with Zero-Boilerplate</h3>
+            <p>In larger projects with dozens of controllers, it can be tedious to manually list every file in <code>mod.rs</code>. That's why we created the <code>#[alakit_main]</code> macro!</p>
             <div class="note">
                 <strong>How does it work?</strong>
-                <ol>
-                    <li>Crfeate a <code>build.rs</code> file that scans the <code>src/controllers</code> folder before compilation.</li>
-                    <li>The script generates a temporary Rust file containing all found modules.</li>
-                    <li>In <code>mod.rs</code>, we only need to use a single line: <code>include!(concat!(env!("OUT_DIR"), "/generated_controllers.rs"));</code></li>
-                </ol>
-                <p>This way, you just need to create a new <code>.rs</code> file in the folder, and Alakit will automatically register it during the next build.</p>
+                <p>If you add this attribute to your <code>main</code> function, the macro transparently scans the <code>src/controllers</code> directory, imports all files as modules, and executes the full registration process in the background. You'll never need a <code>build.rs</code> or a <code>mod.rs</code> file ever again!</p>
             </div>
         </section>
 
@@ -418,9 +409,8 @@ impl AlakitController for VaultController {
             <p>Alakit's goal is <strong>Single Binary</strong> distribution: one .exe file containing everything.
             </p>
 
-            <h3>Optimization</h3>
-            <p>Use <code>rust-embed</code> to embed UI files, so you don't need to copy folders alongside the
-                installer.</p>
+            <h3>Asset Encryption</h3>
+            <p>Alakit provides built-in protection for your interface. The <code>alakit_assets!("ui/")</code> macro generates a unique encryption key at compile time, encrypts your files, and saves <strong>only the cryptographic binary data</strong> into the <code>.exe</code> file. This ensures that Hex Editors and Unpackers cannot extract your HTML/JS source code. Furthermore, Alakit uses a dedicated "Incognito Mode" in the browser engine, meaning it never writes the decrypted files to the physical disk (neither to AppData nor anywhere else)!</p>
             <pre><code>cargo build --release</code></pre>
 
             <h3>Windows Protection</h3>
